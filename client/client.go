@@ -14,7 +14,7 @@ import (
 
 // Config contains the client configuration.
 type Config struct {
-	// Base URL of the service (https://keys.sylabs.io is used if not supplied).
+	// Base URL of the service (https://build.sylabs.io is used if not supplied).
 	BaseURL string
 	// Auth token to include in the Authorization header of each request (if supplied).
 	AuthToken string
@@ -39,7 +39,7 @@ type Client struct {
 	HTTPClient *http.Client
 }
 
-// NewClient sets up a new Remote-Build Service client with the specified base URL and auth token.
+// NewClient sets up a new build service client with the specified base URL and auth token.
 func NewClient(cfg *Config) (c *Client, err error) {
 	if cfg == nil {
 		cfg = DefaultConfig

@@ -1,10 +1,10 @@
-# SCS Remote-Build Client
+# SCS Build Client
 
-[![GoDoc](https://godoc.org/github.com/sylabs/scs-remote-build-client?status.svg)](https://godoc.org/github.com/sylabs/scs-remote-build-client)
-[![Build Status](https://circleci.com/gh/sylabs/scs-remote-build-client.svg?style=shield)](https://circleci.com/gh/sylabs/workflows/scs-remote-build-client)
-[![Go Report Card](https://goreportcard.com/badge/github.com/sylabs/scs-remote-build-client)](https://goreportcard.com/report/github.com/sylabs/scs-remote-build-client)
+[![GoDoc](https://godoc.org/github.com/sylabs/scs-build-client?status.svg)](https://godoc.org/github.com/sylabs/scs-build-client)
+[![Build Status](https://circleci.com/gh/sylabs/scs-build-client.svg?style=shield)](https://circleci.com/gh/sylabs/workflows/scs-build-client)
+[![Go Report Card](https://goreportcard.com/badge/github.com/sylabs/scs-build-client)](https://goreportcard.com/report/github.com/sylabs/scs-build-client)
 
-This project provides a Go client for the Singularity Container Services (SCS) Remote-Build Service.
+This project provides a Go client for the Singularity Container Services (SCS) Build Service.
 
 ## Quick Start
 

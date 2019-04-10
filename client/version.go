@@ -19,8 +19,8 @@ type VersionInfo struct {
 	Version string `json:"version"`
 }
 
-// GetVersion gets version information from the Remote-Build Service. The context controls the lifetime of
-// the request.
+// GetVersion gets version information from the build service. The context
+// controls the lifetime of the request.
 func (c *Client) GetVersion(ctx context.Context) (vi VersionInfo, err error) {
 	req, err := c.newRequest(http.MethodGet, pathVersion, "", nil)
 	if err != nil {

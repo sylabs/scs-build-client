@@ -1,4 +1,4 @@
-module github.com/sylabs/scs-remote-build-client
+module github.com/sylabs/scs-build-client
 
 go 1.12
 
