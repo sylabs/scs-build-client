@@ -18,6 +18,8 @@ type Config struct {
 	BaseURL string
 	// Auth token to include in the Authorization header of each request (if supplied).
 	AuthToken string
+	// Library URL of the service (https://library.sylabs.io is used if not supplied).
+	LibraryURL string
 	// User agent to include in each request (if supplied).
 	UserAgent string
 	// HTTPClient to use to make HTTP requests (if supplied).
@@ -33,6 +35,8 @@ type Client struct {
 	BaseURL *url.URL
 	// Auth token to include in the Authorization header of each request (if supplied).
 	AuthToken string
+	// Library URL of the service
+	LibraryURL *url.URL
 	// User agent to include in each request (if supplied).
 	UserAgent string
 	// HTTPClient to use to make HTTP requests.
@@ -55,10 +59,21 @@ func NewClient(cfg *Config) (c *Client, err error) {
 		return nil, err
 	}
 
+	// Determine library URL
+	lu := "https://library.sylabs.io"
+	if cfg.LibraryURL != "" {
+		lu = cfg.LibraryURL
+	}
+	libraryURL, err := url.Parse(lu)
+	if err != nil {
+		return nil, err
+	}
+
 	c = &Client{
-		BaseURL:   baseURL,
-		AuthToken: cfg.AuthToken,
-		UserAgent: cfg.UserAgent,
+		BaseURL:    baseURL,
+		AuthToken:  cfg.AuthToken,
+		LibraryURL: libraryURL,
+		UserAgent:  cfg.UserAgent,
 	}
 
 	// Set HTTP client
@@ -82,12 +97,16 @@ func (c *Client) newRequest(method, path, rawQuery string, body io.Reader) (r *h
 	if err != nil {
 		return nil, err
 	}
-	if v := c.AuthToken; v != "" {
-		r.Header.Set("Authorization", fmt.Sprintf("BEARER %s", v))
-	}
-	if v := c.UserAgent; v != "" {
-		r.Header.Set("User-Agent", v)
-	}
+	c.setRequestHeaders(r.Header)
 
 	return r, nil
+}
+
+func (c *Client) setRequestHeaders(h http.Header) {
+	if v := c.AuthToken; v != "" {
+		h.Set("Authorization", fmt.Sprintf("BEARER %s", v))
+	}
+	if v := c.UserAgent; v != "" {
+		h.Set("User-Agent", v)
+	}
 }

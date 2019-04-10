@@ -21,9 +21,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/gorilla/websocket"
 	jsonresp "github.com/sylabs/json-resp"
-	"github.com/sylabs/singularity/internal/pkg/test"
-	types "github.com/sylabs/singularity/pkg/build/legacy"
-	useragent "github.com/sylabs/singularity/pkg/util/user-agent"
 )
 
 const (
@@ -48,12 +45,10 @@ type mockService struct {
 var upgrader = websocket.Upgrader{}
 
 func TestMain(m *testing.M) {
-	useragent.InitValue("singularity", "3.0.0-alpha.1-303-gaed8d30-dirty")
-
 	os.Exit(m.Run())
 }
 
-func newResponse(m *mockService, id bson.ObjectId, d types.Definition, libraryRef string) types.ResponseData {
+func newResponse(m *mockService, id bson.ObjectId, d Definition, libraryRef string) ResponseData {
 	wsURL := url.URL{
 		Scheme: "ws",
 		Host:   m.httpAddr,
@@ -67,7 +62,7 @@ func newResponse(m *mockService, id bson.ObjectId, d types.Definition, libraryRe
 		libraryRef = "library://user/collection/image"
 	}
 
-	return types.ResponseData{
+	return ResponseData{
 		ID:         id,
 		Definition: d,
 		WSURL:      wsURL.String(),
@@ -82,7 +77,7 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Set the response body, depending on the type of operation
 	if r.Method == http.MethodPost && r.RequestURI == buildPath {
 		// Mock new build endpoint
-		var rd types.RequestData
+		var rd RequestData
 		if err := json.NewDecoder(r.Body).Decode(&rd); err != nil {
 			m.t.Fatalf("failed to parse request: %v", err)
 		}
@@ -99,7 +94,7 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			m.t.Fatalf("failed to parse ID '%v'", id)
 		}
 		if m.statusResponseCode == http.StatusOK {
-			jsonresp.WriteResponse(w, newResponse(m, bson.ObjectIdHex(id), types.Definition{}, ""), m.statusResponseCode)
+			jsonresp.WriteResponse(w, newResponse(m, bson.ObjectIdHex(id), Definition{}, ""), m.statusResponseCode)
 		} else {
 			jsonresp.WriteError(w, "", m.statusResponseCode)
 		}
@@ -134,8 +129,6 @@ func (m *mockService) ServeWebsocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestBuild(t *testing.T) {
-	test.DropPrivilege(t)
-	defer test.ResetPrivilege(t)
 
 	// Craft an expired context
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now())
@@ -159,6 +152,11 @@ func TestBuild(t *testing.T) {
 
 	// Mock server address is fixed for all tests
 	m.httpAddr = s.Listener.Addr().String()
+
+	url, err := url.Parse(s.URL)
+	if err != nil {
+		t.Fatalf("failed to parse URL: %v", err)
+	}
 
 	// Table of tests to run
 	// nolint:maligned
@@ -191,12 +189,15 @@ func TestBuild(t *testing.T) {
 
 	// Loop over test cases
 	for _, tt := range tests {
-		t.Run(tt.description, test.WithoutPrivilege(func(t *testing.T) {
-			rb, err := New(tt.imagePath, "", types.Definition{}, tt.isDetached, false, s.URL, authToken)
+		t.Run(tt.description, func(t *testing.T) {
+			rb, err := NewClient(&Config{
+				BaseURL:    url.String(),
+				AuthToken:  authToken,
+				LibraryURL: url.String(),
+			})
 			if err != nil {
 				t.Fatalf("failed to get new remote builder: %v", err)
 			}
-			rb.Force = true
 
 			// Set the response codes for each stage of the build
 			m.buildResponseCode = tt.buildResponseCode
@@ -206,7 +207,7 @@ func TestBuild(t *testing.T) {
 			m.imageResponseCode = tt.imageResponseCode
 
 			// Do it!
-			err = rb.Build(tt.ctx)
+			err = rb.Build(tt.ctx, tt.imagePath, Definition{}, tt.isDetached, true)
 
 			if tt.expectSuccess {
 				// Ensure the handler returned no error, and the response is as expected
@@ -219,7 +220,7 @@ func TestBuild(t *testing.T) {
 					t.Fatalf("unexpected success")
 				}
 			}
-		}))
+		})
 	}
 }
 
@@ -253,17 +254,20 @@ func TestDoBuildRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse URL: %v", err)
 	}
-	rb := RemoteBuilder{
-		BuilderURL: url,
+	rb, err := NewClient(&Config{
+		BaseURL: url.String(),
+	})
+	if err != nil {
+		t.Fatalf("failed to parse URL: %v", err)
 	}
 
 	// Loop over test cases
 	for _, tt := range tests {
-		t.Run(tt.description, test.WithoutPrivilege(func(t *testing.T) {
+		t.Run(tt.description, func(t *testing.T) {
 			m.buildResponseCode = tt.responseCode
 
 			// Call the handler
-			rd, err := rb.doBuildRequest(tt.ctx, types.Definition{}, tt.libraryRef)
+			rd, err := rb.doBuildRequest(tt.ctx, Definition{}, tt.libraryRef)
 
 			if tt.expectSuccess {
 				// Ensure the handler returned no error, and the response is as expected
@@ -288,7 +292,7 @@ func TestDoBuildRequest(t *testing.T) {
 					t.Fatalf("unexpected success")
 				}
 			}
-		}))
+		})
 	}
 }
 
@@ -319,8 +323,11 @@ func TestDoStatusRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse URL: %v", err)
 	}
-	rb := RemoteBuilder{
-		BuilderURL: url,
+	rb, err := NewClient(&Config{
+		BaseURL: url.String(),
+	})
+	if err != nil {
+		t.Fatalf("failed to parse URL: %v", err)
 	}
 
 	// ID to test with
@@ -328,7 +335,7 @@ func TestDoStatusRequest(t *testing.T) {
 
 	// Loop over test cases
 	for _, tt := range tests {
-		t.Run(tt.description, test.WithoutPrivilege(func(t *testing.T) {
+		t.Run(tt.description, func(t *testing.T) {
 			m.statusResponseCode = tt.responseCode
 
 			// Call the handler
@@ -357,6 +364,6 @@ func TestDoStatusRequest(t *testing.T) {
 					t.Fatalf("unexpected success")
 				}
 			}
-		}))
+		})
 	}
 }
