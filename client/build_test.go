@@ -18,7 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/globalsign/mgo/bson"
 	"github.com/gorilla/websocket"
 	jsonresp "github.com/sylabs/json-resp"
 )
@@ -48,11 +47,11 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func newResponse(m *mockService, id bson.ObjectId, d Definition, libraryRef string) ResponseData {
+func newResponse(m *mockService, id string, d Definition, libraryRef string) ResponseData {
 	wsURL := url.URL{
 		Scheme: "ws",
 		Host:   m.httpAddr,
-		Path:   fmt.Sprintf("%s%s", wsPath, id.Hex()),
+		Path:   fmt.Sprintf("%s%s", wsPath, id),
 	}
 	libraryURL := url.URL{
 		Scheme: "http",
@@ -82,7 +81,7 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			m.t.Fatalf("failed to parse request: %v", err)
 		}
 		if m.buildResponseCode == http.StatusCreated {
-			id := bson.NewObjectId()
+			id := newObjectID()
 			if err := jsonresp.WriteResponse(w, newResponse(m, id, rd.Definition, rd.LibraryRef), m.buildResponseCode); err != nil {
 				m.t.Fatal(err)
 			}
@@ -94,11 +93,11 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == http.MethodGet && strings.HasPrefix(r.RequestURI, buildPath) {
 		// Mock status endpoint
 		id := r.RequestURI[strings.LastIndexByte(r.RequestURI, '/')+1:]
-		if !bson.IsObjectIdHex(id) {
+		if id == "" {
 			m.t.Fatalf("failed to parse ID '%v'", id)
 		}
 		if m.statusResponseCode == http.StatusOK {
-			if err := jsonresp.WriteResponse(w, newResponse(m, bson.ObjectIdHex(id), Definition{}, ""), m.statusResponseCode); err != nil {
+			if err := jsonresp.WriteResponse(w, newResponse(m, id, Definition{}, ""), m.statusResponseCode); err != nil {
 				m.t.Fatal(err)
 			}
 		} else {
@@ -310,7 +309,7 @@ func TestDoBuildRequest(t *testing.T) {
 				if err != nil {
 					t.Fatalf("unexpected failure: %v", err)
 				}
-				if !rd.ID.Valid() {
+				if rd.ID == "" {
 					t.Fatalf("invalid ID")
 				}
 				if rd.WSURL == "" {
@@ -367,7 +366,7 @@ func TestDoStatusRequest(t *testing.T) {
 	}
 
 	// ID to test with
-	id := bson.NewObjectId()
+	id := newObjectID()
 
 	// Loop over test cases
 	for _, tt := range tests {

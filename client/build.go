@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/globalsign/mgo/bson"
 	"github.com/golang/glog"
 	"github.com/gorilla/websocket"
 	jsonresp "github.com/sylabs/json-resp"
@@ -48,7 +47,7 @@ func (c *Client) SubmitBuild(ctx context.Context, d Definition, libraryRef strin
 	err = jsonresp.ReadResponse(res.Body, &rd)
 	if err == nil {
 		glog.V(2).Infof("Build response - id: %s, wsurl: %s, libref: %s",
-			rd.ID.Hex(), rd.WSURL, rd.LibraryRef)
+			rd.ID, rd.WSURL, rd.LibraryRef)
 	}
 	return
 }
@@ -95,8 +94,8 @@ func (c *Client) StreamOutput(ctx context.Context, wsURL string) error {
 }
 
 // GetBuildStatus gets the status of a build from the Remote Build Service
-func (c *Client) GetBuildStatus(ctx context.Context, buildID bson.ObjectId) (rd ResponseData, err error) {
-	req, err := c.newRequest(http.MethodGet, "/v1/build/"+buildID.Hex(), "", nil)
+func (c *Client) GetBuildStatus(ctx context.Context, buildID string) (rd ResponseData, err error) {
+	req, err := c.newRequest(http.MethodGet, "/v1/build/"+buildID, "", nil)
 	if err != nil {
 		return
 	}
