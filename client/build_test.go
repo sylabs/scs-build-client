@@ -175,37 +175,37 @@ func TestBuild(t *testing.T) {
 	// Table of tests to run
 	// nolint:maligned
 	tests := []struct {
-		description        string
-		expectSuccess      bool
-		imagePath          string
-		libraryURL         string
-		buildResponseCode  int
-		wsResponseCode     int
-		wsCloseCode        int
-		statusResponseCode int
-		imageResponseCode  int
-		ctx                context.Context
-		isDetached         bool
+		description         string
+		expectSubmitSuccess bool
+		expectStreamSuccess bool
+		expectStatusSuccess bool
+		imagePath           string
+		libraryURL          string
+		buildResponseCode   int
+		wsResponseCode      int
+		wsCloseCode         int
+		statusResponseCode  int
+		imageResponseCode   int
+		ctx                 context.Context
+		isDetached          bool
 	}{
-		{"SuccessAttached", true, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
-		{"SuccessDetached", true, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), true},
-		{"SuccessLibraryRef", true, "library://user/collection/image", "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
-		{"SuccessLibraryRefURL", true, "library://user/collection/image", m.httpAddr, http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
-		{"BadLibraryRef", false, "library://bad", "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
-		{"AddBuildFailure", false, f.Name(), "", http.StatusUnauthorized, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
-		{"WebsocketFailure", false, f.Name(), "", http.StatusCreated, http.StatusUnauthorized, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
-		{"WebsocketAbnormalClosure", false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseAbnormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
-		{"GetStatusFailure", false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusUnauthorized, http.StatusOK, context.Background(), false},
-		{"ContextExpired", false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, ctx, false},
+		{"SuccessAttached", true, true, true, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
+		{"SuccessDetached", true, true, true, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), true},
+		{"SuccessLibraryRef", true, true, true, "library://user/collection/image", "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
+		{"SuccessLibraryRefURL", true, true, true, "library://user/collection/image", m.httpAddr, http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
+		{"AddBuildFailure", false, false, false, f.Name(), "", http.StatusUnauthorized, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
+		{"WebsocketFailure", true, false, true, f.Name(), "", http.StatusCreated, http.StatusUnauthorized, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
+		{"WebsocketAbnormalClosure", true, false, true, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseAbnormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
+		{"GetStatusFailure", true, true, false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusUnauthorized, http.StatusOK, context.Background(), false},
+		{"ContextExpired", false, false, false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, ctx, false},
 	}
 
 	// Loop over test cases
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
 			rb, err := NewClient(&Config{
-				BaseURL:    url.String(),
-				AuthToken:  authToken,
-				LibraryURL: url.String(),
+				BaseURL:   url.String(),
+				AuthToken: authToken,
 			})
 			if err != nil {
 				t.Fatalf("failed to get new remote builder: %v", err)
@@ -219,17 +219,42 @@ func TestBuild(t *testing.T) {
 			m.imageResponseCode = tt.imageResponseCode
 
 			// Do it!
-			_, err = rb.Build(tt.ctx, tt.imagePath, Definition{}, tt.isDetached)
+			rd, err := rb.SubmitBuild(tt.ctx, Definition{}, tt.imagePath, url.String())
+			if !tt.expectSubmitSuccess {
+				// Ensure the handler returned an error
+				if err == nil {
+					t.Fatalf("unexpected submit success")
+				}
+				return
+			}
+			// Ensure the handler returned no error, and the response is as expected
+			if err != nil {
+				t.Fatalf("unexpected submit failure: %v", err)
+			}
 
-			if tt.expectSuccess {
+			err = rb.StreamOutput(tt.ctx, rd.WSURL)
+			if tt.expectStreamSuccess {
 				// Ensure the handler returned no error, and the response is as expected
 				if err != nil {
-					t.Fatalf("unexpected failure: %v", err)
+					t.Fatalf("unexpected stream failure: %v", err)
 				}
 			} else {
 				// Ensure the handler returned an error
 				if err == nil {
-					t.Fatalf("unexpected success")
+					t.Fatalf("unexpected stream success")
+				}
+			}
+
+			rd, err = rb.GetBuildStatus(tt.ctx, rd.ID)
+			if tt.expectStatusSuccess {
+				// Ensure the handler returned no error, and the response is as expected
+				if err != nil {
+					t.Fatalf("unexpected status failure: %v", err)
+				}
+			} else {
+				// Ensure the handler returned an error
+				if err == nil {
+					t.Fatalf("unexpected status success")
 				}
 			}
 		})
@@ -251,7 +276,6 @@ func TestDoBuildRequest(t *testing.T) {
 	}{
 		{"SuccessAttached", true, "", http.StatusCreated, context.Background()},
 		{"SuccessLibraryRef", true, "library://user/collection/image", http.StatusCreated, context.Background()},
-		{"BadLibraryRef", false, "library://bad", http.StatusCreated, context.Background()},
 		{"NotFoundAttached", false, "", http.StatusNotFound, context.Background()},
 		{"ContextExpiredAttached", false, "", http.StatusCreated, ctx},
 	}
@@ -279,7 +303,7 @@ func TestDoBuildRequest(t *testing.T) {
 			m.buildResponseCode = tt.responseCode
 
 			// Call the handler
-			rd, err := rb.doBuildRequest(tt.ctx, Definition{}, tt.libraryRef)
+			rd, err := rb.SubmitBuild(tt.ctx, Definition{}, tt.libraryRef, "")
 
 			if tt.expectSuccess {
 				// Ensure the handler returned no error, and the response is as expected
@@ -351,7 +375,7 @@ func TestDoStatusRequest(t *testing.T) {
 			m.statusResponseCode = tt.responseCode
 
 			// Call the handler
-			rd, err := rb.doStatusRequest(tt.ctx, id)
+			rd, err := rb.GetBuildStatus(tt.ctx, id)
 
 			if tt.expectSuccess {
 				// Ensure the handler returned no error, and the response is as expected
