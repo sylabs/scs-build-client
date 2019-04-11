@@ -82,12 +82,16 @@ func (c *Client) newRequest(method, path, rawQuery string, body io.Reader) (r *h
 	if err != nil {
 		return nil, err
 	}
-	if v := c.AuthToken; v != "" {
-		r.Header.Set("Authorization", fmt.Sprintf("BEARER %s", v))
-	}
-	if v := c.UserAgent; v != "" {
-		r.Header.Set("User-Agent", v)
-	}
+	c.setRequestHeaders(r.Header)
 
 	return r, nil
+}
+
+func (c *Client) setRequestHeaders(h http.Header) {
+	if v := c.AuthToken; v != "" {
+		h.Set("Authorization", fmt.Sprintf("BEARER %s", v))
+	}
+	if v := c.UserAgent; v != "" {
+		h.Set("User-Agent", v)
+	}
 }
