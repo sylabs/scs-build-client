@@ -9,6 +9,7 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -43,7 +44,9 @@ func readMachineId() []byte {
 		return id
 	}
 	hw := md5.New()
-	hw.Write([]byte(hostname))
+	if _, err := hw.Write([]byte(hostname)); err != nil {
+		panic(err)
+	}
 	copy(id, hw.Sum(nil))
 	return id
 }
@@ -64,5 +67,5 @@ func newObjectID() string {
 	b[9] = byte(i >> 16)
 	b[10] = byte(i >> 8)
 	b[11] = byte(i)
-	return string(b[:])
+	return hex.EncodeToString(b[:])
 }
