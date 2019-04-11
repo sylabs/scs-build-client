@@ -24,7 +24,7 @@ import (
 // CloudURI holds the URI of the Library web front-end.
 const CloudURI = "https://cloud.sylabs.io"
 
-func (c *Client) Build(ctx context.Context, imagePath string, definition Definition, isDetached, force bool) error {
+func (c *Client) Build(ctx context.Context, imagePath string, definition Definition, isDetached bool) (string, error) {
 	var libraryRef string
 
 	if strings.HasPrefix(imagePath, "library://") {
@@ -37,7 +37,7 @@ func (c *Client) Build(ctx context.Context, imagePath string, definition Definit
 	if err != nil {
 		err = errors.Wrap(err, "failed to post request to remote build service")
 		glog.Warningf("%v", err)
-		return err
+		return "", err
 	}
 
 	// If we're doing an detached build, print help on how to download the image
@@ -55,7 +55,7 @@ func (c *Client) Build(ctx context.Context, imagePath string, definition Definit
 		if err != nil {
 			err = errors.Wrap(err, "failed to stream output from remote build service")
 			glog.Warningf("%v", err)
-			return err
+			return "", err
 		}
 
 		// Get build status
@@ -63,29 +63,19 @@ func (c *Client) Build(ctx context.Context, imagePath string, definition Definit
 		if err != nil {
 			err = errors.Wrap(err, "failed to get status from remote build service")
 			glog.Warningf("%v", err)
-			return err
+			return "", err
 		}
 
 		// Do not try to download image if not complete or image size is 0
 		if !rd.IsComplete {
-			return errors.New("build has not completed")
+			return "", errors.New("build has not completed")
 		}
 		if rd.ImageSize <= 0 {
-			return errors.New("build image size <= 0")
-		}
-
-		// If image destination is local file, pull image.
-		if !strings.HasPrefix(imagePath, "library://") {
-			err = c.downloadImage(imagePath, rd.LibraryRef, force)
-			if err != nil {
-				err = errors.Wrap(err, "failed to pull image file")
-				glog.Warningf("%v", err)
-				return err
-			}
+			return "", errors.New("build image size <= 0")
 		}
 	}
 
-	return nil
+	return rd.LibraryRef, nil
 }
 
 // streamOutput attaches via websocket and streams output to the console

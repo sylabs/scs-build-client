@@ -83,9 +83,13 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		if m.buildResponseCode == http.StatusCreated {
 			id := bson.NewObjectId()
-			jsonresp.WriteResponse(w, newResponse(m, id, rd.Definition, rd.LibraryRef), m.buildResponseCode)
+			if err := jsonresp.WriteResponse(w, newResponse(m, id, rd.Definition, rd.LibraryRef), m.buildResponseCode); err != nil {
+				m.t.Fatal(err)
+			}
 		} else {
-			jsonresp.WriteError(w, "", m.buildResponseCode)
+			if err := jsonresp.WriteError(w, "", m.buildResponseCode); err != nil {
+				m.t.Fatal(err)
+			}
 		}
 	} else if r.Method == http.MethodGet && strings.HasPrefix(r.RequestURI, buildPath) {
 		// Mock status endpoint
@@ -94,18 +98,24 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			m.t.Fatalf("failed to parse ID '%v'", id)
 		}
 		if m.statusResponseCode == http.StatusOK {
-			jsonresp.WriteResponse(w, newResponse(m, bson.ObjectIdHex(id), Definition{}, ""), m.statusResponseCode)
+			if err := jsonresp.WriteResponse(w, newResponse(m, bson.ObjectIdHex(id), Definition{}, ""), m.statusResponseCode); err != nil {
+				m.t.Fatal(err)
+			}
 		} else {
-			jsonresp.WriteError(w, "", m.statusResponseCode)
+			if err := jsonresp.WriteError(w, "", m.statusResponseCode); err != nil {
+				m.t.Fatal(err)
+			}
 		}
 	} else if r.Method == http.MethodGet && strings.HasPrefix(r.RequestURI, imagePath) {
 		// Mock get image endpoint
 		if m.imageResponseCode == http.StatusOK {
 			if _, err := strings.NewReader(imageContents).WriteTo(w); err != nil {
-				m.t.Fatalf("failed to write image")
+				m.t.Fatalf("failed to write image - %v", err)
 			}
 		} else {
-			jsonresp.WriteError(w, "", m.imageResponseCode)
+			if err := jsonresp.WriteError(w, "", m.imageResponseCode); err != nil {
+				m.t.Fatal(err)
+			}
 		}
 	} else {
 		w.WriteHeader(http.StatusNotFound)
@@ -123,8 +133,12 @@ func (m *mockService) ServeWebsocket(w http.ResponseWriter, r *http.Request) {
 		defer ws.Close()
 
 		// Write some output and then cleanly close the connection
-		ws.WriteMessage(websocket.TextMessage, []byte(stdoutContents))
-		ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(m.wsCloseCode, ""))
+		if err = ws.WriteMessage(websocket.TextMessage, []byte(stdoutContents)); err != nil {
+			m.t.Fatalf("error writing websocket message - %v", err)
+		}
+		if err = ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(m.wsCloseCode, "")); err != nil {
+			m.t.Fatalf("error writing websocket close message - %v", err)
+		}
 	}
 }
 
@@ -177,13 +191,11 @@ func TestBuild(t *testing.T) {
 		{"SuccessDetached", true, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), true},
 		{"SuccessLibraryRef", true, "library://user/collection/image", "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
 		{"SuccessLibraryRefURL", true, "library://user/collection/image", m.httpAddr, http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
-		{"BadImagePath", false, "/tmp/bad/", "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
 		{"BadLibraryRef", false, "library://bad", "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
 		{"AddBuildFailure", false, f.Name(), "", http.StatusUnauthorized, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
 		{"WebsocketFailure", false, f.Name(), "", http.StatusCreated, http.StatusUnauthorized, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
 		{"WebsocketAbnormalClosure", false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseAbnormalClosure, http.StatusOK, http.StatusOK, context.Background(), false},
 		{"GetStatusFailure", false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusUnauthorized, http.StatusOK, context.Background(), false},
-		{"GetImageFailure", false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusUnauthorized, context.Background(), false},
 		{"ContextExpired", false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, ctx, false},
 	}
 
@@ -207,7 +219,7 @@ func TestBuild(t *testing.T) {
 			m.imageResponseCode = tt.imageResponseCode
 
 			// Do it!
-			err = rb.Build(tt.ctx, tt.imagePath, Definition{}, tt.isDetached, true)
+			_, err = rb.Build(tt.ctx, tt.imagePath, Definition{}, tt.isDetached)
 
 			if tt.expectSuccess {
 				// Ensure the handler returned no error, and the response is as expected
