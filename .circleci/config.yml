@@ -65,7 +65,7 @@ jobs:
             - go-mod-{{ checksum "go.sum" }}
       - run:
           name: Build Source
-          command: go build ./...
+          command: go build -mod=readonly ./...
 
   check_formatting:
     <<: *defaults
