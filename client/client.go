@@ -39,6 +39,8 @@ type Client struct {
 	HTTPClient *http.Client
 }
 
+const defaultBaseURL = "https://build.sylabs.io"
+
 // NewClient sets up a new build service client with the specified base URL and auth token.
 func NewClient(cfg *Config) (c *Client, err error) {
 	if cfg == nil {
@@ -46,13 +48,16 @@ func NewClient(cfg *Config) (c *Client, err error) {
 	}
 
 	// Determine base URL
-	bu := "https://build.sylabs.io"
+	bu := defaultBaseURL
 	if cfg.BaseURL != "" {
 		bu = cfg.BaseURL
 	}
 	baseURL, err := url.Parse(bu)
 	if err != nil {
 		return nil, err
+	}
+	if baseURL.Scheme != "http" && baseURL.Scheme != "https" {
+		return nil, fmt.Errorf("unsupported protocol scheme %q", baseURL.Scheme)
 	}
 
 	c = &Client{
