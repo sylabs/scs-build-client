@@ -18,9 +18,9 @@ import (
 )
 
 var (
-	objectIdCounter = readRandomUint32()
-	machineId       = readMachineId()
-	processId       = os.Getpid()
+	objectIDCounter = readRandomUint32()
+	machineID       = readMachineID()
+	processID       = os.Getpid()
 )
 
 func readRandomUint32() uint32 {
@@ -32,7 +32,7 @@ func readRandomUint32() uint32 {
 	return uint32((uint32(b[0]) << 0) | (uint32(b[1]) << 8) | (uint32(b[2]) << 16) | (uint32(b[3]) << 24))
 }
 
-func readMachineId() []byte {
+func readMachineID() []byte {
 	var sum [3]byte
 	id := sum[:]
 	hostname, err1 := os.Hostname()
@@ -56,14 +56,14 @@ func newObjectID() string {
 	// Timestamp, 4 bytes, big endian
 	binary.BigEndian.PutUint32(b[:], uint32(time.Now().Unix()))
 	// Machine, first 3 bytes of md5(hostname)
-	b[4] = machineId[0]
-	b[5] = machineId[1]
-	b[6] = machineId[2]
+	b[4] = machineID[0]
+	b[5] = machineID[1]
+	b[6] = machineID[2]
 	// Pid, 2 bytes, specs don't specify endianness, but we use big endian.
-	b[7] = byte(processId >> 8)
-	b[8] = byte(processId)
+	b[7] = byte(processID >> 8)
+	b[8] = byte(processID)
 	// Increment, 3 bytes, big endian
-	i := atomic.AddUint32(&objectIdCounter, 1)
+	i := atomic.AddUint32(&objectIDCounter, 1)
 	b[9] = byte(i >> 16)
 	b[10] = byte(i >> 8)
 	b[11] = byte(i)

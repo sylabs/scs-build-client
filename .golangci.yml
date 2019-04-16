@@ -3,7 +3,6 @@ linters:
   disable:
     - gochecknoglobals
     - gocritic
-    - golint
     - gosec
     - lll
     - nakedret
