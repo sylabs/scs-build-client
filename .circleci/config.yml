@@ -68,7 +68,7 @@ jobs:
             - go-mod-{{ checksum "go.sum" }}
       - run:
           name: Run Tests
-          command: go test -cover -race -timeout 60s ./...
+          command: go test -cover -race ./...
 
 workflows:
   version: 2
