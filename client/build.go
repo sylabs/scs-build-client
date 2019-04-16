@@ -49,7 +49,7 @@ func (c *Client) SubmitBuild(ctx context.Context, d Definition, libraryRef strin
 		glog.V(2).Infof("Build response - id: %s, wsurl: %s, libref: %s",
 			rd.ID, rd.WSURL, rd.LibraryRef)
 	}
-	return
+	return rd, err
 }
 
 // StreamOutput reads log output from the websocket URL. The context controls
