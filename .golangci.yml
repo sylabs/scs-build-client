@@ -5,6 +5,5 @@ linters:
     - gocritic
     - gosec
     - lll
-    - nakedret
     - scopelint
     - unconvert
