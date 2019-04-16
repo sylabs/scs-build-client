@@ -6,4 +6,3 @@ linters:
     - gosec
     - lll
     - scopelint
-    - unconvert
