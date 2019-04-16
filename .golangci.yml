@@ -1,0 +1,11 @@
+linters:
+  enable-all: true
+  disable:
+    - gochecknoglobals
+    - gocritic
+    - golint
+    - gosec
+    - lll
+    - nakedret
+    - scopelint
+    - unconvert
