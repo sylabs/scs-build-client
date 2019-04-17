@@ -16,7 +16,7 @@ import (
 	"github.com/sylabs/scs-build-client/client"
 )
 
-func TestSubmit(t *testing.T) {
+func TestStatus(t *testing.T) {
 	// Craft an expired context
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now())
 	defer cancel()
@@ -25,14 +25,12 @@ func TestSubmit(t *testing.T) {
 	tests := []struct {
 		description   string
 		expectSuccess bool
-		libraryRef    string
 		responseCode  int
 		ctx           context.Context
 	}{
-		{"SuccessAttached", true, "", http.StatusCreated, context.Background()},
-		{"SuccessLibraryRef", true, "library://user/collection/image", http.StatusCreated, context.Background()},
-		{"NotFoundAttached", false, "", http.StatusNotFound, context.Background()},
-		{"ContextExpiredAttached", false, "", http.StatusCreated, ctx},
+		{"Success", true, http.StatusOK, context.Background()},
+		{"NotFound", false, http.StatusNotFound, context.Background()},
+		{"ContextExpired", false, http.StatusOK, ctx},
 	}
 
 	// Start a mock server
@@ -52,21 +50,24 @@ func TestSubmit(t *testing.T) {
 		t.Fatalf("failed to parse URL: %v", err)
 	}
 
+	// ID to test with
+	id := newObjectID()
+
 	// Loop over test cases
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			m.buildResponseCode = tt.responseCode
+			m.statusResponseCode = tt.responseCode
 
 			// Call the handler
-			bi, err := c.Submit(tt.ctx, client.Definition{}, tt.libraryRef, "")
+			bi, err := c.GetStatus(tt.ctx, id)
 
 			if tt.expectSuccess {
 				// Ensure the handler returned no error, and the response is as expected
 				if err != nil {
 					t.Fatalf("unexpected failure: %v", err)
 				}
-				if bi.ID == "" {
-					t.Fatalf("invalid ID")
+				if bi.ID != id {
+					t.Errorf("mismatched ID: %v/%v", bi.ID, id)
 				}
 				if bi.LibraryRef == "" {
 					t.Errorf("empty Library ref")

@@ -41,8 +41,8 @@ type Client struct {
 
 const defaultBaseURL = "https://build.sylabs.io"
 
-// NewClient sets up a new build service client with the specified base URL and auth token.
-func NewClient(cfg *Config) (c *Client, err error) {
+// New sets up a new build service client with the specified base URL and auth token.
+func New(cfg *Config) (c *Client, err error) {
 	if cfg == nil {
 		cfg = DefaultConfig
 	}
