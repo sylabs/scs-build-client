@@ -6,33 +6,19 @@
 package client
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"net/http"
 
 	jsonresp "github.com/sylabs/json-resp"
 )
 
-// Submit sends a build job to the Build Service. The context controls the
-// lifetime of the request.
-func (c *Client) Submit(ctx context.Context, d Definition, libraryRef string, libraryURL string) (bi BuildInfo, err error) {
-
-	b, err := json.Marshal(BuildRequest{
-		Definition: d,
-		LibraryRef: libraryRef,
-		LibraryURL: libraryURL,
-	})
-	if err != nil {
-		return
-	}
-
-	req, err := c.newRequest(http.MethodPost, "/v1/build", "", bytes.NewReader(b))
+// GetStatus gets the status of a build from the Build Service by build ID
+func (c *Client) GetStatus(ctx context.Context, buildID string) (bi BuildInfo, err error) {
+	req, err := c.newRequest(http.MethodGet, "/v1/build/"+buildID, "", nil)
 	if err != nil {
 		return
 	}
 	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/json")
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
