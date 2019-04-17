@@ -58,20 +58,20 @@ func TestSubmit(t *testing.T) {
 			m.buildResponseCode = tt.responseCode
 
 			// Call the handler
-			bd, err := c.Submit(tt.ctx, client.Definition{}, tt.libraryRef, "")
+			bi, err := c.Submit(tt.ctx, client.Definition{}, tt.libraryRef, "")
 
 			if tt.expectSuccess {
 				// Ensure the handler returned no error, and the response is as expected
 				if err != nil {
 					t.Fatalf("unexpected failure: %v", err)
 				}
-				if bd.ID == "" {
+				if bi.ID == "" {
 					t.Fatalf("invalid ID")
 				}
-				if bd.LibraryRef == "" {
+				if bi.LibraryRef == "" {
 					t.Errorf("empty Library ref")
 				}
-				if bd.LibraryURL == "" {
+				if bi.LibraryURL == "" {
 					t.Errorf("empty Library URL")
 				}
 			} else {

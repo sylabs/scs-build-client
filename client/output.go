@@ -21,8 +21,8 @@ type OutputReader interface {
 	Read(messageType int, p []byte) (int, error)
 }
 
-// GetOutput reads log output from the websocket URL. The context controls the
-// lifetime of the request.
+// GetOutput reads the build output log for the provided buildID - streaming to
+// OutputReader. The context controls the lifetime of the request.
 func (c *Client) GetOutput(ctx context.Context, buildID string, or OutputReader) error {
 	u := c.BaseURL.ResolveReference(&url.URL{
 		Scheme:   "ws",
