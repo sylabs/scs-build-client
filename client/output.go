@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/golang/glog"
 	"github.com/gorilla/websocket"
 )
 
@@ -36,7 +35,7 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, or OutputReader)
 
 	ws, resp, err := websocket.DefaultDialer.Dial(u.String(), h)
 	if err != nil {
-		glog.V(2).Infof("websocket dial err - %s, partial response: %+v", err, resp)
+		c.Logger.Logf("websocket dial err - %s, partial response: %+v", err, resp)
 		return err
 	}
 	defer ws.Close()
@@ -55,7 +54,7 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, or OutputReader)
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 				return nil
 			}
-			glog.Infof("websocket read message err - %s", err)
+			c.Logger.Logf("websocket read message err - %s", err)
 			return err
 		}
 

@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/golang/glog"
 	jsonresp "github.com/sylabs/json-resp"
 )
 
@@ -34,7 +33,7 @@ func (c *Client) Submit(ctx context.Context, d Definition, libraryRef string, li
 	}
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
-	glog.V(2).Infof("Sending build request to %s", req.URL.String())
+	c.Logger.Logf("Sending build request to %s", req.URL.String())
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -44,7 +43,7 @@ func (c *Client) Submit(ctx context.Context, d Definition, libraryRef string, li
 
 	err = jsonresp.ReadResponse(res.Body, &bi)
 	if err == nil {
-		glog.V(2).Infof("Build response - id: %s, libref: %s", bi.ID, bi.LibraryRef)
+		c.Logger.Logf("Build response - id: %s, libref: %s", bi.ID, bi.LibraryRef)
 	}
 	return
 }
