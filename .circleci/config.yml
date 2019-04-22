@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  codecov: codecov/codecov@1.0.4
+
 defaults: &defaults
   working_directory: /src
   docker:
@@ -68,7 +71,9 @@ jobs:
             - go-mod-{{ checksum "go.sum" }}
       - run:
           name: Run Tests
-          command: go test -cover -race ./...
+          command: go test -coverprofile cover.out -race ./...
+      - codecov/upload:
+          file: cover.out
 
 workflows:
   version: 2
