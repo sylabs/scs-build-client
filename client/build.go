@@ -16,13 +16,8 @@ import (
 
 // Submit sends a build job to the Build Service. The context controls the
 // lifetime of the request.
-func (c *Client) Submit(ctx context.Context, d Definition, libraryRef string, libraryURL string) (bi BuildInfo, err error) {
-
-	b, err := json.Marshal(BuildRequest{
-		Definition: d,
-		LibraryRef: libraryRef,
-		LibraryURL: libraryURL,
-	})
+func (c *Client) Submit(ctx context.Context, br BuildRequest) (bi BuildInfo, err error) {
+	b, err := json.Marshal(br)
 	if err != nil {
 		return
 	}

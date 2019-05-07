@@ -47,7 +47,7 @@ const (
 	imagePath      = "/v1/image"
 )
 
-func newResponse(m *mockService, id string, d client.Definition, libraryRef string) client.BuildInfo {
+func newResponse(m *mockService, id string, def []byte, libraryRef string) client.BuildInfo {
 	libraryURL := url.URL{
 		Scheme: "http",
 		Host:   m.httpAddr,
@@ -57,12 +57,12 @@ func newResponse(m *mockService, id string, d client.Definition, libraryRef stri
 	}
 
 	return client.BuildInfo{
-		ID:         id,
-		Definition: d,
-		LibraryURL: libraryURL.String(),
-		LibraryRef: libraryRef,
-		IsComplete: true,
-		ImageSize:  1,
+		ID:            id,
+		DefinitionRaw: def,
+		LibraryURL:    libraryURL.String(),
+		LibraryRef:    libraryRef,
+		IsComplete:    true,
+		ImageSize:     1,
 	}
 }
 
@@ -76,7 +76,7 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		if m.buildResponseCode == http.StatusCreated {
 			id := newObjectID()
-			if err := jsonresp.WriteResponse(w, newResponse(m, id, br.Definition, br.LibraryRef), m.buildResponseCode); err != nil {
+			if err := jsonresp.WriteResponse(w, newResponse(m, id, br.DefinitionRaw, br.LibraryRef), m.buildResponseCode); err != nil {
 				m.t.Fatal(err)
 			}
 		} else {
@@ -91,7 +91,7 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			m.t.Fatalf("failed to parse ID '%v'", id)
 		}
 		if m.statusResponseCode == http.StatusOK {
-			if err := jsonresp.WriteResponse(w, newResponse(m, id, client.Definition{}, ""), m.statusResponseCode); err != nil {
+			if err := jsonresp.WriteResponse(w, newResponse(m, id, []byte{}, ""), m.statusResponseCode); err != nil {
 				m.t.Fatal(err)
 			}
 		} else {
@@ -210,7 +210,11 @@ func TestBuild(t *testing.T) {
 			m.imageResponseCode = tt.imageResponseCode
 
 			// Do it!
-			bd, err := c.Submit(tt.ctx, client.Definition{}, tt.imagePath, url.String())
+			bd, err := c.Submit(tt.ctx, client.BuildRequest{
+				DefinitionRaw: []byte{},
+				LibraryRef:    tt.imagePath,
+				LibraryURL:    url.String(),
+			})
 			if !tt.expectSubmitSuccess {
 				// Ensure the handler returned an error
 				if err == nil {
