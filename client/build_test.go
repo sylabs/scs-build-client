@@ -58,7 +58,11 @@ func TestSubmit(t *testing.T) {
 			m.buildResponseCode = tt.responseCode
 
 			// Call the handler
-			bi, err := c.Submit(tt.ctx, client.Definition{}, tt.libraryRef, "")
+			bi, err := c.Submit(tt.ctx, client.BuildRequest{
+				DefinitionRaw: []byte{},
+				LibraryRef:    tt.libraryRef,
+				LibraryURL:    "",
+			})
 
 			if tt.expectSuccess {
 				// Ensure the handler returned no error, and the response is as expected

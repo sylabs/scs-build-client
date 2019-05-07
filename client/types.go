@@ -11,10 +11,11 @@ import (
 
 // BuildRequest contains the info necessary for submitting a build to build service
 type BuildRequest struct {
-	Definition  `json:"definition"`
-	LibraryRef  string `json:"libraryRef"`
-	LibraryURL  string `json:"libraryURL"`
-	CallbackURL string `json:"callbackURL"`
+	LibraryRef          string            `json:"libraryRef"`
+	LibraryURL          string            `json:"libraryURL"`
+	CallbackURL         string            `json:"callbackURL"`
+	DefinitionRaw       []byte            `json:"definitionRaw"`
+	BuilderRequirements map[string]string `json:"builderRequirements"`
 }
 
 // BuildInfo contains the details of an individual build
@@ -26,8 +27,8 @@ type BuildInfo struct {
 	CompleteTime  *time.Time `json:"completeTime,omitempty"`
 	ImageSize     int64      `json:"imageSize,omitempty"`
 	ImageChecksum string     `json:"imageChecksum,omitempty"`
-	Definition    Definition `json:"definition"`
 	LibraryRef    string     `json:"libraryRef"`
 	LibraryURL    string     `json:"libraryURL"`
 	CallbackURL   string     `json:"callbackURL"`
+	DefinitionRaw []byte     `json:"definitionRaw"`
 }
