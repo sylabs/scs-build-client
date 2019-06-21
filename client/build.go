@@ -23,7 +23,7 @@ func (c *Client) Submit(ctx context.Context, br BuildRequest) (bi BuildInfo, err
 		return
 	}
 
-	req, err := c.newRequest(http.MethodPost, "/v1/build", "", bytes.NewReader(b))
+	req, err := c.newRequest(http.MethodPost, "/v1/build", bytes.NewReader(b))
 	if err != nil {
 		return
 	}
@@ -47,7 +47,7 @@ func (c *Client) Submit(ctx context.Context, br BuildRequest) (bi BuildInfo, err
 // Cancel cancels an existing build. The context controls the lifetime of the
 // request.
 func (c *Client) Cancel(ctx context.Context, buildID string) error {
-	req, err := c.newRequest(http.MethodPut, fmt.Sprintf("/v1/build/%s/_cancel", buildID), "", nil)
+	req, err := c.newRequest(http.MethodPut, fmt.Sprintf("/v1/build/%s/_cancel", buildID), nil)
 	if err != nil {
 		return err
 	}
