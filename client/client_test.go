@@ -29,6 +29,7 @@ type mockService struct {
 	wsCloseCode        int
 	statusResponseCode int
 	imageResponseCode  int
+	cancelResponseCode int
 	httpAddr           string
 }
 
@@ -39,12 +40,13 @@ func TestMain(m *testing.M) {
 }
 
 const (
-	authToken      = "auth_token"
-	stdoutContents = "some_output"
-	imageContents  = "image_contents"
-	buildPath      = "/v1/build"
-	wsPath         = "/v1/build-ws/"
-	imagePath      = "/v1/image"
+	authToken         = "auth_token"
+	stdoutContents    = "some_output"
+	imageContents     = "image_contents"
+	buildPath         = "/v1/build"
+	wsPath            = "/v1/build-ws/"
+	imagePath         = "/v1/image"
+	buildCancelSuffix = "/_cancel"
 )
 
 func newResponse(m *mockService, id string, def []byte, libraryRef string) client.BuildInfo {
@@ -107,6 +109,15 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			if err := jsonresp.WriteError(w, "", m.imageResponseCode); err != nil {
+				m.t.Fatal(err)
+			}
+		}
+	} else if r.Method == http.MethodPut && strings.HasSuffix(r.RequestURI, buildCancelSuffix) {
+		// Mock build cancellation endpoint
+		if m.cancelResponseCode == http.StatusNoContent {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			if err := jsonresp.WriteError(w, "", m.cancelResponseCode); err != nil {
 				m.t.Fatal(err)
 			}
 		}

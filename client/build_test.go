@@ -87,3 +87,29 @@ func TestSubmit(t *testing.T) {
 		})
 	}
 }
+
+func TestCancel(t *testing.T) {
+	// Start a mock server
+	m := mockService{t: t}
+	s := httptest.NewServer(&m)
+	defer s.Close()
+
+	// Enough of a struct to test with
+	url, err := url.Parse(s.URL)
+	if err != nil {
+		t.Fatalf("failed to parse URL: %v", err)
+	}
+	c, err := client.New(&client.Config{
+		BaseURL: url.String(),
+	})
+	if err != nil {
+		t.Fatalf("failed to parse URL: %v", err)
+	}
+
+	m.cancelResponseCode = 204
+
+	err = c.Cancel(context.Background(), "00000000")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
