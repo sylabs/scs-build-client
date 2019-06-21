@@ -48,6 +48,7 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, or OutputReader)
 		c.Logger.Logf("websocket dial err - %s, partial response: %+v", err, resp)
 		return err
 	}
+	defer resp.Body.Close()
 	defer ws.Close()
 
 	go func() {
