@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  codecov: codecov/codecov@1.0.4
+  codecov: codecov/codecov@1.0.5
 
 defaults: &defaults
   working_directory: /src
@@ -57,7 +57,7 @@ jobs:
             - go-mod-{{ checksum "go.sum" }}
       - run:
           name: Install golangci-lint
-          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.16.0
+          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.17.1
       - run:
           name: Check for Lint
           command: golangci-lint run
