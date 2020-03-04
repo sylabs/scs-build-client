@@ -1,9 +1,34 @@
 linters:
-  enable-all: true
-  disable:
-    - funlen
-    - gochecknoglobals
-    - gocritic
-    - gosec
-    - lll
-    - scopelint
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
+    - errcheck
+    - gochecknoinits
+    - goconst
+    - gocyclo
+    - godox
+    - gofmt
+    - goimports
+    - golint
+    - goprintffuncname
+    - gosimple
+    - govet
+    - ineffassign
+    - interfacer
+    - maligned
+    - misspell
+    - nakedret
+    - prealloc
+    - rowserrcheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
