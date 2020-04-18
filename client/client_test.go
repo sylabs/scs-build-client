@@ -1,270 +1,185 @@
-// Copyright (c) 2018-2019, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2020, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
 
-package client_test
+package client
 
 import (
-	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
-	"net/url"
-	"os"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/gorilla/websocket"
-	jsonresp "github.com/sylabs/json-resp"
-	"github.com/sylabs/scs-build-client/client"
+	"github.com/go-log/log"
 )
 
-type mockService struct {
-	t                  *testing.T
-	buildResponseCode  int
-	wsResponseCode     int
-	wsCloseCode        int
-	statusResponseCode int
-	imageResponseCode  int
-	cancelResponseCode int
-	httpAddr           string
-}
+type mockLogger struct{}
 
-var upgrader = websocket.Upgrader{}
+func (*mockLogger) Log(v ...interface{})                 {}
+func (*mockLogger) Logf(format string, v ...interface{}) {}
 
-func TestMain(m *testing.M) {
-	os.Exit(m.Run())
-}
+func TestNewClient(t *testing.T) {
+	httpClient := &http.Client{}
+	logger := &mockLogger{}
 
-const (
-	authToken         = "auth_token"
-	stdoutContents    = "some_output"
-	imageContents     = "image_contents"
-	buildPath         = "/v1/build"
-	wsPath            = "/v1/build-ws/"
-	imagePath         = "/v1/image"
-	buildCancelSuffix = "/_cancel"
-)
-
-func newResponse(m *mockService, id string, def []byte, libraryRef string) client.BuildInfo {
-	libraryURL := url.URL{
-		Scheme: "http",
-		Host:   m.httpAddr,
-	}
-	if libraryRef == "" {
-		libraryRef = "library://user/collection/image"
-	}
-
-	return client.BuildInfo{
-		ID:            id,
-		DefinitionRaw: def,
-		LibraryURL:    libraryURL.String(),
-		LibraryRef:    libraryRef,
-		IsComplete:    true,
-		ImageSize:     1,
-	}
-}
-
-func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Set the response body, depending on the type of operation
-	if r.Method == http.MethodPost && r.RequestURI == buildPath {
-		// Mock new build endpoint
-		var br client.BuildRequest
-		if err := json.NewDecoder(r.Body).Decode(&br); err != nil {
-			m.t.Fatalf("failed to parse request: %v", err)
-		}
-		if m.buildResponseCode == http.StatusCreated {
-			id := newObjectID()
-			if err := jsonresp.WriteResponse(w, newResponse(m, id, br.DefinitionRaw, br.LibraryRef), m.buildResponseCode); err != nil {
-				m.t.Fatal(err)
-			}
-		} else {
-			if err := jsonresp.WriteError(w, "", m.buildResponseCode); err != nil {
-				m.t.Fatal(err)
-			}
-		}
-	} else if r.Method == http.MethodGet && strings.HasPrefix(r.RequestURI, buildPath) {
-		// Mock status endpoint
-		id := r.RequestURI[strings.LastIndexByte(r.RequestURI, '/')+1:]
-		if id == "" {
-			m.t.Fatalf("failed to parse ID '%v'", id)
-		}
-		if m.statusResponseCode == http.StatusOK {
-			if err := jsonresp.WriteResponse(w, newResponse(m, id, []byte{}, ""), m.statusResponseCode); err != nil {
-				m.t.Fatal(err)
-			}
-		} else {
-			if err := jsonresp.WriteError(w, "", m.statusResponseCode); err != nil {
-				m.t.Fatal(err)
-			}
-		}
-	} else if r.Method == http.MethodGet && strings.HasPrefix(r.RequestURI, imagePath) {
-		// Mock get image endpoint
-		if m.imageResponseCode == http.StatusOK {
-			if _, err := strings.NewReader(imageContents).WriteTo(w); err != nil {
-				m.t.Fatalf("failed to write image - %v", err)
-			}
-		} else {
-			if err := jsonresp.WriteError(w, "", m.imageResponseCode); err != nil {
-				m.t.Fatal(err)
-			}
-		}
-	} else if r.Method == http.MethodPut && strings.HasSuffix(r.RequestURI, buildCancelSuffix) {
-		// Mock build cancellation endpoint
-		if m.cancelResponseCode == http.StatusNoContent {
-			w.WriteHeader(http.StatusNoContent)
-		} else {
-			if err := jsonresp.WriteError(w, "", m.cancelResponseCode); err != nil {
-				m.t.Fatal(err)
-			}
-		}
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-	}
-}
-
-func (m *mockService) ServeWebsocket(w http.ResponseWriter, r *http.Request) {
-	if m.wsResponseCode != http.StatusOK {
-		w.WriteHeader(m.wsResponseCode)
-	} else {
-		ws, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			m.t.Fatalf("failed to upgrade websocket: %v", err)
-		}
-		defer ws.Close()
-
-		// Write some output and then cleanly close the connection
-		if err = ws.WriteMessage(websocket.TextMessage, []byte(stdoutContents)); err != nil {
-			m.t.Fatalf("error writing websocket message - %v", err)
-		}
-		if err = ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(m.wsCloseCode, "")); err != nil {
-			m.t.Fatalf("error writing websocket close message - %v", err)
-		}
-	}
-}
-
-func TestBuild(t *testing.T) {
-
-	// Craft an expired context
-	expiredCtx, cancel := context.WithDeadline(context.Background(), time.Now())
-	defer cancel()
-
-	// Create a temporary file for testing
-	f, err := ioutil.TempFile("/tmp", "TestBuild")
-	if err != nil {
-		t.Fatalf("failed to create temp file: %v", err)
-	}
-	f.Close()
-	defer os.Remove(f.Name())
-
-	// Start a mock server
-	m := mockService{t: t}
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", m.ServeHTTP)
-	mux.HandleFunc(wsPath, m.ServeWebsocket)
-	s := httptest.NewServer(mux)
-	defer s.Close()
-
-	// Mock server address is fixed for all tests
-	m.httpAddr = s.Listener.Addr().String()
-
-	url, err := url.Parse(s.URL)
-	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
-	}
-
-	// Table of tests to run
-	// nolint:maligned
 	tests := []struct {
-		description         string
-		expectSubmitSuccess bool
-		expectStreamSuccess bool
-		expectStatusSuccess bool
-		imagePath           string
-		libraryURL          string
-		buildResponseCode   int
-		wsResponseCode      int
-		wsCloseCode         int
-		statusResponseCode  int
-		imageResponseCode   int
-		ctx                 context.Context
+		name           string
+		cfg            *Config
+		wantErr        bool
+		wantURL        string
+		wantAuthToken  string
+		wantUserAgent  string
+		wantHTTPClient *http.Client
+		wantLogger     log.Logger
 	}{
-		{"Success", true, true, true, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background()},
-		{"SuccessLibraryRef", true, true, true, "library://user/collection/image", "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background()},
-		{"SuccessLibraryRefURL", true, true, true, "library://user/collection/image", m.httpAddr, http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background()},
-		{"AddBuildFailure", false, false, false, f.Name(), "", http.StatusUnauthorized, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background()},
-		{"WebsocketFailure", true, false, true, f.Name(), "", http.StatusCreated, http.StatusUnauthorized, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background()},
-		{"WebsocketAbnormalClosure", true, false, true, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseAbnormalClosure, http.StatusOK, http.StatusOK, context.Background()},
-		{"GetStatusFailure", true, true, false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusUnauthorized, http.StatusOK, context.Background()},
-		{"ContextExpired", false, false, false, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, expiredCtx},
+		{"NilConfig", nil, false, defaultBaseURL, "", "", http.DefaultClient, log.DefaultLogger},
+		{"HTTPBaseURL", &Config{
+			BaseURL: "http://build.staging.sylabs.io",
+		}, false, "http://build.staging.sylabs.io", "", "", http.DefaultClient, log.DefaultLogger},
+		{"HTTPSBaseURL", &Config{
+			BaseURL: "https://build.staging.sylabs.io",
+		}, false, "https://build.staging.sylabs.io", "", "", http.DefaultClient, log.DefaultLogger},
+		{"HTTPSBaseURLWithPath", &Config{
+			BaseURL: "https://build.staging.sylabs.io/path",
+		}, false, "https://build.staging.sylabs.io/path/", "", "", http.DefaultClient, log.DefaultLogger},
+		{"HTTPSBaseURLWithPathSlash", &Config{
+			BaseURL: "https://build.staging.sylabs.io/path/",
+		}, false, "https://build.staging.sylabs.io/path/", "", "", http.DefaultClient, log.DefaultLogger},
+		{"UnsupportedBaseURL", &Config{
+			BaseURL: "bad:",
+		}, true, "", "", "", nil, log.DefaultLogger},
+		{"BadBaseURL", &Config{
+			BaseURL: ":",
+		}, true, "", "", "", nil, log.DefaultLogger},
+		{"AuthToken", &Config{
+			AuthToken: "blah",
+		}, false, defaultBaseURL, "blah", "", http.DefaultClient, log.DefaultLogger},
+		{"UserAgent", &Config{
+			UserAgent: "Secret Agent Man",
+		}, false, defaultBaseURL, "", "Secret Agent Man", http.DefaultClient, log.DefaultLogger},
+		{"HTTPClient", &Config{
+			HTTPClient: httpClient,
+		}, false, defaultBaseURL, "", "", httpClient, log.DefaultLogger},
+		{"Logger", &Config{
+			Logger: logger,
+		}, false, defaultBaseURL, "", "", http.DefaultClient, logger},
 	}
 
-	// Loop over test cases
 	for _, tt := range tests {
-		t.Run(tt.description, func(t *testing.T) {
-			c, err := client.New(&client.Config{
-				BaseURL:   url.String(),
-				AuthToken: authToken,
-			})
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := New(tt.cfg)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got err %v, want %v", err, tt.wantErr)
+			}
+
+			if err == nil {
+				if got, want := c.BaseURL.String(), tt.wantURL; got != want {
+					t.Errorf("got host %v, want %v", got, want)
+				}
+
+				if got, want := c.AuthToken, tt.wantAuthToken; got != want {
+					t.Errorf("got auth token %v, want %v", got, want)
+				}
+
+				if got, want := c.UserAgent, tt.wantUserAgent; got != want {
+					t.Errorf("got user agent %v, want %v", got, want)
+				}
+
+				if got, want := c.HTTPClient, tt.wantHTTPClient; got != want {
+					t.Errorf("got HTTP client %v, want %v", got, want)
+				}
+			}
+		})
+	}
+}
+
+func TestNewRequest(t *testing.T) {
+	tests := []struct {
+		name           string
+		cfg            *Config
+		method         string
+		path           string
+		body           string
+		wantErr        bool
+		wantURL        string
+		wantAuthBearer string
+		wantUserAgent  string
+	}{
+		{"BadMethod", nil, "b@d	", "", "", true, "", "", ""},
+		{"NilConfigGet", nil, http.MethodGet, "/path", "", false, "https://build.sylabs.io/path", "", ""},
+		{"NilConfigPost", nil, http.MethodPost, "/path", "", false, "https://build.sylabs.io/path", "", ""},
+		{"NilConfigPostBody", nil, http.MethodPost, "/path", "body", false, "https://build.sylabs.io/path", "", ""},
+		{"HTTPBaseURL", &Config{
+			BaseURL: "http://build.staging.sylabs.io",
+		}, http.MethodGet, "/path", "", false, "http://build.staging.sylabs.io/path", "", ""},
+		{"HTTPSBaseURL", &Config{
+			BaseURL: "https://build.staging.sylabs.io",
+		}, http.MethodGet, "/path", "", false, "https://build.staging.sylabs.io/path", "", ""},
+		{"BaseURLWithPath", &Config{
+			BaseURL: "https://build.staging.sylabs.io/path",
+		}, http.MethodGet, "/path", "", false, "https://build.staging.sylabs.io/path/path", "", ""},
+		{"AuthToken", &Config{
+			AuthToken: "blah",
+		}, http.MethodGet, "/path", "", false, "https://build.sylabs.io/path", "BEARER blah", ""},
+		{"UserAgent", &Config{
+			UserAgent: "Secret Agent Man",
+		}, http.MethodGet, "/path", "", false, "https://build.sylabs.io/path", "", "Secret Agent Man"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c, err := New(tt.cfg)
 			if err != nil {
-				t.Fatalf("failed to get new builder: %v", err)
+				t.Fatalf("failed to create client: %v", err)
 			}
 
-			// Set the response codes for each stage of the build
-			m.buildResponseCode = tt.buildResponseCode
-			m.wsResponseCode = tt.wsResponseCode
-			m.wsCloseCode = tt.wsCloseCode
-			m.statusResponseCode = tt.statusResponseCode
-			m.imageResponseCode = tt.imageResponseCode
+			r, err := c.newRequest(tt.method, tt.path, strings.NewReader(tt.body))
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got err %v, wantErr %v", err, tt.wantErr)
+			}
 
-			// Do it!
-			bd, err := c.Submit(tt.ctx, client.BuildRequest{
-				DefinitionRaw: []byte{},
-				LibraryRef:    tt.imagePath,
-				LibraryURL:    url.String(),
-			})
-			if !tt.expectSubmitSuccess {
-				// Ensure the handler returned an error
-				if err == nil {
-					t.Fatalf("unexpected submit success")
+			if err == nil {
+				if got, want := r.Method, tt.method; got != want {
+					t.Errorf("got method %v, want %v", got, want)
 				}
-				return
-			}
-			// Ensure the handler returned no error, and the response is as expected
-			if err != nil {
-				t.Fatalf("unexpected submit failure: %v", err)
-			}
 
-			tor := TestOutputReader{
-				ReadFully: true,
-				ReadErr:   nil,
-			}
-			err = c.GetOutput(tt.ctx, bd.ID, tor)
-			if tt.expectStreamSuccess {
-				// Ensure the handler returned no error, and the response is as expected
+				if got, want := r.URL.String(), tt.wantURL; got != want {
+					t.Errorf("got URL %v, want %v", got, want)
+				}
+
+				b, err := ioutil.ReadAll(r.Body)
 				if err != nil {
-					t.Fatalf("unexpected stream failure: %v", err)
+					t.Errorf("failed to read body: %v", err)
 				}
-			} else {
-				// Ensure the handler returned an error
-				if err == nil {
-					t.Fatalf("unexpected stream success")
+				if got, want := string(b), tt.body; got != want {
+					t.Errorf("got body %v, want %v", got, want)
 				}
-			}
 
-			bd, err = c.GetStatus(tt.ctx, bd.ID)
-			if tt.expectStatusSuccess {
-				// Ensure the handler returned no error, and the response is as expected
-				if err != nil {
-					t.Fatalf("unexpected status failure: %v", err)
+				authBearer, ok := r.Header["Authorization"]
+				if got, want := ok, (tt.wantAuthBearer != ""); got != want {
+					t.Fatalf("presence of auth bearer %v, want %v", got, want)
 				}
-			} else {
-				// Ensure the handler returned an error
-				if err == nil {
-					t.Fatalf("unexpected status success")
+				if ok {
+					if got, want := len(authBearer), 1; got != want {
+						t.Fatalf("got %v auth bearer(s), want %v", got, want)
+					}
+					if got, want := authBearer[0], tt.wantAuthBearer; got != want {
+						t.Errorf("got auth bearer %v, want %v", got, want)
+					}
+				}
+
+				userAgent, ok := r.Header["User-Agent"]
+				if got, want := ok, (tt.wantUserAgent != ""); got != want {
+					t.Fatalf("presence of user agent %v, want %v", got, want)
+				}
+				if ok {
+					if got, want := len(userAgent), 1; got != want {
+						t.Fatalf("got %v user agent(s), want %v", got, want)
+					}
+					if got, want := userAgent[0], tt.wantUserAgent; got != want {
+						t.Errorf("got user agent %v, want %v", got, want)
+					}
 				}
 			}
 		})
