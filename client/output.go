@@ -26,16 +26,15 @@ type OutputReader interface {
 // GetOutput reads the build output log for the provided buildID - streaming to
 // OutputReader. The context controls the lifetime of the request.
 func (c *Client) GetOutput(ctx context.Context, buildID string, or OutputReader) error {
+	u := c.BaseURL.ResolveReference(&url.URL{
+		Path: "v1/build-ws/" + buildID,
+	})
+
 	wsScheme := "ws"
 	if c.BaseURL.Scheme == "https" {
 		wsScheme = "wss"
 	}
-	u := c.BaseURL.ResolveReference(&url.URL{
-		Scheme:   wsScheme,
-		Host:     c.BaseURL.Host,
-		Path:     "/v1/build-ws/" + buildID,
-		RawQuery: "",
-	})
+	u.Scheme = wsScheme
 
 	h := http.Header{}
 	c.setRequestHeaders(h)
