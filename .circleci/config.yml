@@ -3,14 +3,8 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@1.1.0
 
-defaults: &defaults
-  working_directory: /src
-  docker:
-    - image: golang:1.14
-
 jobs:
   lint_markdown:
-    <<: *defaults
     docker:
       - image: node:14-slim
     steps:
@@ -23,7 +17,8 @@ jobs:
           command: markdownlint .
 
   check_mod_tidy:
-    <<: *defaults
+    docker:
+      - image: golang:1.14
     steps:
       - checkout
       - run:
@@ -33,7 +28,8 @@ jobs:
             git diff --exit-code -- go.mod go.sum
 
   build_source:
-    <<: *defaults
+    docker:
+      - image: golang:1.14
     steps:
       - checkout
       - run:
@@ -41,7 +37,8 @@ jobs:
           command: go build ./...
 
   lint_source:
-    <<: *defaults
+    docker:
+      - image: golang:1.14
     steps:
       - checkout
       - run:
@@ -52,7 +49,8 @@ jobs:
           command: golangci-lint run
 
   unit_test:
-    <<: *defaults
+    docker:
+      - image: golang:1.14
     steps:
       - checkout
       - run:
