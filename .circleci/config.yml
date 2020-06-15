@@ -1,18 +1,12 @@
 version: 2.1
 
 orbs:
-  codecov: codecov/codecov@1.0.5
-
-defaults: &defaults
-  working_directory: /src
-  docker:
-    - image: golang:1.14
+  codecov: codecov/codecov@1.1.0
 
 jobs:
   lint_markdown:
-    <<: *defaults
     docker:
-      - image: node:13-slim
+      - image: node:14-slim
     steps:
       - checkout
       - run:
@@ -22,27 +16,41 @@ jobs:
           name: Check for Lint
           command: markdownlint .
 
+  check_mod_tidy:
+    docker:
+      - image: golang:1.14
+    steps:
+      - checkout
+      - run:
+          name: Check Module Tidiness
+          command: |-
+            go mod tidy
+            git diff --exit-code -- go.mod go.sum
+
   build_source:
-    <<: *defaults
+    docker:
+      - image: golang:1.14
     steps:
       - checkout
       - run:
           name: Build Source
-          command: go build -mod=readonly ./...
+          command: go build ./...
 
   lint_source:
-    <<: *defaults
+    docker:
+      - image: golang:1.14
     steps:
       - checkout
       - run:
           name: Install golangci-lint
-          command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.24.0
+          command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.27.0
       - run:
           name: Check for Lint
           command: golangci-lint run
 
   unit_test:
-    <<: *defaults
+    docker:
+      - image: golang:1.14
     steps:
       - checkout
       - run:
@@ -57,6 +65,7 @@ workflows:
   build_and_test:
     jobs:
       - lint_markdown
+      - check_mod_tidy
       - build_source
       - lint_source
       - unit_test
