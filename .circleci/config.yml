@@ -22,10 +22,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Go Mod Tidy
+          command: go mod tidy
+      - run:
           name: Check Module Tidiness
-          command: |-
-            go mod tidy
-            git diff --exit-code -- go.mod go.sum
+          command: git diff --exit-code -- go.mod go.sum
 
   build_source:
     docker:
@@ -43,7 +44,7 @@ jobs:
       - checkout
       - run:
           name: Install golangci-lint
-          command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.27.0
+          command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.28.1
       - run:
           name: Check for Lint
           command: golangci-lint run
