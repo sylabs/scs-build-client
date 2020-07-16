@@ -1,6 +1,6 @@
 # SCS Build Client
 
-[![GoDoc](https://godoc.org/github.com/sylabs/scs-build-client?status.svg)](https://godoc.org/github.com/sylabs/scs-build-client)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/sylabs/scs-build-client)](https://pkg.go.dev/github.com/sylabs/scs-build-client/client)
 [![Build Status](https://circleci.com/gh/sylabs/scs-build-client.svg?style=shield)](https://circleci.com/gh/sylabs/workflows/scs-build-client)
 [![Code Coverage](https://codecov.io/gh/sylabs/scs-build-client/branch/master/graph/badge.svg)](https://codecov.io/gh/sylabs/scs-build-client)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sylabs/scs-build-client)](https://goreportcard.com/report/github.com/sylabs/scs-build-client)
