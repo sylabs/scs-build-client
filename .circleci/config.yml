@@ -1,12 +1,22 @@
 version: 2.1
 
 orbs:
-  codecov: codecov/codecov@1.1.0
+  codecov: codecov/codecov@1.1
+
+executors:
+  node:
+    docker:
+      - image: node:14-slim
+  golang:
+    docker:
+      - image: golang:1.14
+  golangci-lint:
+    docker:
+      - image: golangci/golangci-lint:v1.29-alpine
 
 jobs:
   lint_markdown:
-    docker:
-      - image: node:14-slim
+    executor: node
     steps:
       - checkout
       - run:
@@ -17,8 +27,7 @@ jobs:
           command: markdownlint .
 
   check_mod_tidy:
-    docker:
-      - image: golang:1.14
+    executor: golang
     steps:
       - checkout
       - run:
@@ -29,8 +38,7 @@ jobs:
           command: git diff --exit-code -- go.mod go.sum
 
   build_source:
-    docker:
-      - image: golang:1.14
+    executor: golang
     steps:
       - checkout
       - run:
@@ -38,20 +46,15 @@ jobs:
           command: go build ./...
 
   lint_source:
-    docker:
-      - image: golang:1.14
+    executor: golangci-lint
     steps:
       - checkout
-      - run:
-          name: Install golangci-lint
-          command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.28.1
       - run:
           name: Check for Lint
           command: golangci-lint run
 
   unit_test:
-    docker:
-      - image: golang:1.14
+    executor: golang
     steps:
       - checkout
       - run:
