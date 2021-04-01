@@ -1,6 +1,6 @@
 module github.com/sylabs/scs-build-client
 
-go 1.14
+go 1.15
 
 require (
 	github.com/go-log/log v0.2.0
