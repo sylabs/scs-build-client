@@ -5,5 +5,5 @@ go 1.14
 require (
 	github.com/go-log/log v0.2.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/sylabs/json-resp v0.7.0
+	github.com/sylabs/json-resp v0.7.1
 )
