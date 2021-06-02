@@ -15,7 +15,7 @@ executors:
       - image: golangci/golangci-lint:v1.40-alpine
 
 jobs:
-  lint_markdown:
+  lint-markdown:
     executor: node
     steps:
       - checkout
@@ -26,7 +26,7 @@ jobs:
           name: Check for Lint
           command: markdownlint .
 
-  check_mod_tidy:
+  check-mod-tidy:
     executor: golang
     steps:
       - checkout
@@ -37,7 +37,7 @@ jobs:
           name: Check Module Tidiness
           command: git diff --exit-code -- go.mod go.sum
 
-  build_source:
+  build-source:
     executor: golang
     steps:
       - checkout
@@ -45,7 +45,7 @@ jobs:
           name: Build Source
           command: go build ./...
 
-  lint_source:
+  lint-source:
     executor: golangci-lint
     steps:
       - checkout
@@ -53,7 +53,7 @@ jobs:
           name: Check for Lint
           command: golangci-lint run
 
-  unit_test:
+  unit-test:
     executor: golang
     steps:
       - checkout
@@ -68,8 +68,8 @@ workflows:
 
   build_and_test:
     jobs:
-      - lint_markdown
-      - check_mod_tidy
-      - build_source
-      - lint_source
-      - unit_test
+      - lint-markdown
+      - check-mod-tidy
+      - build-source
+      - lint-source
+      - unit-test
