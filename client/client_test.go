@@ -6,7 +6,7 @@
 package client
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -148,7 +148,7 @@ func TestNewRequest(t *testing.T) {
 					t.Errorf("got URL %v, want %v", got, want)
 				}
 
-				b, err := ioutil.ReadAll(r.Body)
+				b, err := io.ReadAll(r.Body)
 				if err != nil {
 					t.Errorf("failed to read body: %v", err)
 				}
