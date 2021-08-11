@@ -7,14 +7,6 @@
 
 This project provides a Go client for the Singularity Container Services (SCS) Build Service.
 
-## Quick Start
+## Go Version Compatibility
 
-To build and test:
-
-```sh
-go test ./...
-```
-
-## Continuous Integration
-
-This package uses [CircleCI](https://circleci.com) for Continuous Integration (CI). It runs automatically on commits and pull requests involving a protected branch. All CI checks must pass before a merge to a proected branch can be performed.
+This module aims to maintain support for the two most recent stable versions of Go. This corresponds to the Go [Release Maintenance Policy](https://github.com/golang/go/wiki/Go-Release-Cycle#release-maintenance) and [Security Policy](https://golang.org/security), ensuring critical bug fixes and security patches are available for all supported language versions.
