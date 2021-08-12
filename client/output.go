@@ -61,7 +61,6 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, or OutputReader)
 		}
 
 		cancel()
-
 	}()
 
 	for {

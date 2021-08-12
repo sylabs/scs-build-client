@@ -147,7 +147,6 @@ func (m *mockService) ServeWebsocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestBuild(t *testing.T) {
-
 	// Craft an expired context
 	expiredCtx, cancel := context.WithDeadline(context.Background(), time.Now())
 	defer cancel()

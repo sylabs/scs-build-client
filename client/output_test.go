@@ -39,7 +39,6 @@ func (tor TestOutputReader) Read(messageType int, p []byte) (int, error) {
 }
 
 func TestOutput(t *testing.T) {
-
 	// Craft an expired context
 	expiredCtx, cancel := context.WithDeadline(context.Background(), time.Now())
 	defer cancel()
