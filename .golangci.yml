@@ -11,7 +11,7 @@ linters:
     - goconst
     - gocyclo
     - godox
-    - gofmt
+    - gofumpt
     - goimports
     - goprintffuncname
     - gosimple
