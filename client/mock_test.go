@@ -8,7 +8,6 @@ package client_test
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -152,7 +151,7 @@ func TestBuild(t *testing.T) {
 	defer cancel()
 
 	// Create a temporary file for testing
-	f, err := ioutil.TempFile("/tmp", "TestBuild")
+	f, err := os.CreateTemp("/tmp", "TestBuild")
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
