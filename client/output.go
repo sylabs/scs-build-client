@@ -42,7 +42,15 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, or OutputReader)
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	ws, resp, err := websocket.DefaultDialer.DialContext(ctx, u.String(), h)
+	dialer := websocket.DefaultDialer
+
+	if c.HTTPClient != nil {
+		if tr, ok := c.HTTPClient.Transport.(*http.Transport); ok {
+			dialer.TLSClientConfig = tr.TLSClientConfig
+		}
+	}
+
+	ws, resp, err := dialer.DialContext(ctx, u.String(), h)
 	if err != nil {
 		c.Logger.Logf("websocket dial err - %s, partial response: %+v", err, resp)
 		return err
