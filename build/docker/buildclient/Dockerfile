@@ -13,3 +13,5 @@ COPY --from=build-stage /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build-stage /go/bin/buildclient /usr/local/bin/
 
 USER 1000
+
+ENTRYPOINT ["/usr/local/bin/buildclient"]

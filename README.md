@@ -49,3 +49,9 @@ buildclient alpine.def
 Be sure to create a secret named `SYLABS_AUTH_TOKEN` containing token obtained from "Access Tokens" in [Sylabs Cloud](https://cloud.sylabs.io).
 
 See [examples/build-def-via-gh.yaml](examples/build-def-via-gh.yaml) for an example configuration.
+
+#### GitLab
+
+Example [gitlab-ci.yml](examples/gitlab-ci.yml) is configured to build using file `alpine.def` contained within the project directory.
+
+This configuration will store the build artifact (`artifact.sif`) within GitLab. Using the `--image-spec` argument to `buildclient`, it is also possible to have it automatically push the resultant build artifact to [Sylabs Cloud](https://cloud.sylabs.io) or a local Singularity Enterprise installation.

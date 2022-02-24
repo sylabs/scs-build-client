@@ -1,0 +1,19 @@
+stages:
+  - build
+
+build-code-job:
+  stage: build
+
+  image:
+    name: "buildclient:latest"
+
+  variables:
+    SKIP_VERIFY: "true"
+
+  script:
+    - /usr/local/bin/buildclient alpine.def
+
+  artifacts:
+    paths:
+      - artifact.sif
+    expire_in: 1 week
