@@ -44,4 +44,8 @@ buildclient alpine.def
 
 ### CI/CD Integration
 
-See [examples/build-def-via-gh.yaml](examples/build-def-via-gh.yaml) for an example configuration for GitHub Actions.
+#### GitHub Actions
+
+Be sure to create a secret named `SYLABS_AUTH_TOKEN` containing token obtained from "Access Tokens" in [Sylabs Cloud](https://cloud.sylabs.io).
+
+See [examples/build-def-via-gh.yaml](examples/build-def-via-gh.yaml) for an example configuration.
