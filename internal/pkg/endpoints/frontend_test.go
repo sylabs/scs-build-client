@@ -37,14 +37,14 @@ func TestGetFrontendConfig(t *testing.T) {
 
 	tests := []struct {
 		name               string
-		cfg                *frontendConfig
+		cfg                *FrontendConfig
 		expectedLibraryURI string
 		expectedBuildURI   string
 		expectedErr        error
 	}{
 		{
 			"Simple",
-			&frontendConfig{
+			&FrontendConfig{
 				LibraryAPI: uri{URI: "https://library.sylabs.io"},
 				BuildAPI:   uri{URI: "https://build.sylabs.io"},
 			},
@@ -54,7 +54,7 @@ func TestGetFrontendConfig(t *testing.T) {
 		},
 		{
 			"Misconfigured",
-			&frontendConfig{},
+			&FrontendConfig{},
 			"https://library.sylabs.io",
 			"https://build.sylabs.io",
 			errServerMisconfigured,

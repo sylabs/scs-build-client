@@ -40,7 +40,7 @@ func TestStdoutLogger(t *testing.T) {
 
 			var bytesWritten int64
 
-			reportedBytesWritten, err := logger.Read(tt.messageType, []byte(tt.messageData))
+			reportedBytesWritten, err := logger.Read(tt.messageType, tt.messageData)
 			if tt.expectError == nil && assert.NoError(t, err) {
 				outC := make(chan string)
 
@@ -115,7 +115,7 @@ func TestBuildDefinition(t *testing.T) {
 			assert.Equal(t, br.BuilderRequirements["arch"], DefaultBuildArch)
 			assert.Equal(t, sampleDef, br.DefinitionRaw)
 
-			if libraryRef.Scheme != "library" {
+			if libraryRef.Scheme != requestTypeLibrary {
 				assert.Empty(t, br.LibraryURL)
 				assert.Empty(t, br.LibraryRef)
 			} else {

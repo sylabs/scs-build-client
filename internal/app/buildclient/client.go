@@ -149,7 +149,7 @@ func (app *App) Run(ctx context.Context) error {
 	}
 
 	if app.artifactFileName == "" {
-		if app.imageSpec.Scheme != "library" {
+		if app.imageSpec.Scheme != requestTypeLibrary {
 			fmt.Printf("Build artifact %v is available for 24 hours or less\n", bi.LibraryRef)
 		}
 		return nil

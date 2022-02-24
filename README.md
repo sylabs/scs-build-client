@@ -24,20 +24,20 @@ configuring Singularity. It is intended to be integrated into a CI/CD workflow.
 #### Build and download artifact
 
 ```sh
-$ buildclient --output alpine_latest.sif --auth-token ${SYLABS_AUTH_TOKEN} docker://alpine
+buildclient --output alpine_latest.sif --auth-token ${SYLABS_AUTH_TOKEN} docker://alpine
 ```
 
 #### Build and push to cloud library
 
 ```sh
-$ buildclient --image-spec library://user/default/alpine:latest --auth-token ${SYLABS_AUTH_TOKEN} alpine.def
+buildclient --image-spec library://user/default/alpine:latest --auth-token ${SYLABS_AUTH_TOKEN} alpine.def
 ```
 
 #### Build ephemeral artifact
 
 ```sh
-$ export SYLABS_AUTH_TOKEN=xxx
-$ buildclient alpine.def
+export SYLABS_AUTH_TOKEN=xxx
+buildclient alpine.def
 ```
 
 `SYLABS_AUTH_TOKEN` is obtained through "Access Tokens" in Sylabs Cloud web UI.

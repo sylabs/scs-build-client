@@ -18,7 +18,7 @@ type uri struct {
 	URI string `json:"uri"`
 }
 
-type frontendConfig struct {
+type FrontendConfig struct {
 	LibraryAPI uri `json:"libraryAPI"`
 	BuildAPI   uri `json:"builderAPI"`
 }
@@ -31,7 +31,7 @@ func getFrontendConfigURL(frontendURL string) string {
 	return url + frontendConfigPath
 }
 
-func GetFrontendConfig(ctx context.Context, httpClient *http.Client, frontendURL string) (*frontendConfig, error) {
+func GetFrontendConfig(ctx context.Context, httpClient *http.Client, frontendURL string) (*FrontendConfig, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, getFrontendConfigURL(frontendURL), nil)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func GetFrontendConfig(ctx context.Context, httpClient *http.Client, frontendURL
 	}
 	defer res.Body.Close()
 
-	var cfg frontendConfig
+	var cfg FrontendConfig
 	if err := json.NewDecoder(res.Body).Decode(&cfg); err != nil {
 		return nil, err
 	}

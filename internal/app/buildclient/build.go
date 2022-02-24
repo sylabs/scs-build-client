@@ -13,6 +13,8 @@ import (
 	"github.com/sylabs/singularity/pkg/build/types"
 )
 
+const requestTypeLibrary = "library"
+
 var errUnknownMessageType = errors.New("unknown message type")
 
 type stdoutLogger struct{}
@@ -34,7 +36,7 @@ func (app *App) buildDefinition(def []byte, arch string, imageSpec *url.URL) bui
 			"arch": arch,
 		},
 	}
-	if imageSpec.Scheme == "library" {
+	if imageSpec.Scheme == requestTypeLibrary {
 		br.LibraryRef = imageSpec.String()
 		br.LibraryURL = app.libraryClient.BaseURL.String()
 	}
