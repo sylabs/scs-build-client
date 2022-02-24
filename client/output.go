@@ -92,6 +92,8 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, or OutputReader)
 			c.Logger.Logf("build cancellation request failed: %v", err)
 		}
 
+		ws.Close()
+
 		<-errChan
 		return nil
 	case err := <-errChan:
