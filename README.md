@@ -41,3 +41,7 @@ buildclient alpine.def
 ```
 
 `SYLABS_AUTH_TOKEN` is obtained through "Access Tokens" in Sylabs Cloud web UI.
+
+### CI/CD Integration
+
+See [examples/build-def-via-gh.yaml]() for an example configuration for GitHub Actions.
