@@ -48,7 +48,7 @@ buildclient alpine.def
 
 Be sure to create a secret named `SYLABS_AUTH_TOKEN` containing token obtained from "Access Tokens" in [Sylabs Cloud](https://cloud.sylabs.io).
 
-See [examples/build-def-via-gh.yaml](examples/build-def-via-gh.yaml) for an example configuration.
+See [examples/github-actions-ci.yaml](examples/github-actions-ci.yaml) for an example configuration.
 
 #### GitLab
 
