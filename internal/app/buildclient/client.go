@@ -59,16 +59,15 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 		app.arch = DefaultBuildArch
 	}
 
-	httpClient := &http.Client{
+	app.httpClient = &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: cfg.SkipTLSVerify,
 			},
 		},
 	}
-	app.httpClient = httpClient
 
-	buildClient, libraryClient, err := getClients(ctx, httpClient, cfg.URL, cfg.AuthToken)
+	buildClient, libraryClient, err := getClients(ctx, app.httpClient, cfg.URL, cfg.AuthToken)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client(s): %w", err)
 	}
