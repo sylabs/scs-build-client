@@ -10,9 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
-	"os/signal"
-	"syscall"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -58,37 +56,47 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, or OutputReader)
 	defer resp.Body.Close()
 	defer ws.Close()
 
+	errChan := make(chan error)
+
 	go func() {
-		sigCh := make(chan os.Signal, 1)
-		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+		defer close(errChan)
+		errChan <- func() error {
+			for {
+				// Read from websocket
+				mt, msg, err := ws.ReadMessage()
+				if err != nil {
+					if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+						return nil
+					}
+					c.Logger.Logf("websocket read message err - %s", err)
+					return err
+				}
 
-		fmt.Printf("\rShutting down due to signal: %v\n", <-sigCh)
+				n, err := or.Read(mt, msg)
+				if err != nil {
+					return err
+				}
+				if n != len(msg) {
+					return fmt.Errorf("did not read all message contents: %d != %d", n, len(msg))
+				}
+			}
+		}()
+	}()
 
-		if err := c.Cancel(ctx, buildID); err != nil {
+	select {
+	case <-ctx.Done():
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := c.Cancel(ctx, buildID); err != nil { //nolint
 			c.Logger.Logf("build cancellation request failed: %v", err)
 		}
 
-		cancel()
-	}()
+		ws.Close()
 
-	for {
-		// Read from websocket
-		mt, msg, err := ws.ReadMessage()
-		if err != nil {
-			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-				return nil
-			}
-			c.Logger.Logf("websocket read message err - %s", err)
-			return err
-		}
-
-		n, err := or.Read(mt, msg)
-		if err != nil {
-			return err
-		}
-		if n != len(msg) {
-			return fmt.Errorf("did not read all message contents: %d != %d", n, len(msg))
-		}
-
+		<-errChan
+		return nil
+	case err := <-errChan:
+		return err
 	}
 }
