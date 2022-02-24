@@ -44,4 +44,4 @@ buildclient alpine.def
 
 ### CI/CD Integration
 
-See [examples/build-def-via-gh.yaml]() for an example configuration for GitHub Actions.
+See [examples/build-def-via-gh.yaml](examples/build-def-via-gh.yaml) for an example configuration for GitHub Actions.
