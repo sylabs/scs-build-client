@@ -17,8 +17,10 @@ import (
 	"github.com/sylabs/singularity/pkg/build/types/parser"
 )
 
+// DefaultBuildArch is defined as amd64
 const DefaultBuildArch = "amd64"
 
+// Config contains set up for application
 type Config struct {
 	URL              string
 	AuthToken        string
@@ -30,6 +32,7 @@ type Config struct {
 	Force            bool
 }
 
+// App represents the application instance
 type App struct {
 	httpClient       *http.Client
 	buildClient      *build.Client
@@ -41,6 +44,7 @@ type App struct {
 	force            bool
 }
 
+// New creates new application instance
 func New(ctx context.Context, cfg *Config) (*App, error) {
 	app := &App{
 		arch:             cfg.Arch,
@@ -106,6 +110,7 @@ func getClients(ctx context.Context, httpClient *http.Client, endpoint, authToke
 	return buildClient, libraryClient, nil
 }
 
+// Run is the main application entrypoint
 func (app *App) Run(ctx context.Context) error {
 	if _, err := os.Stat(app.artifactFileName); !os.IsNotExist(err) {
 		if !app.force {
@@ -134,7 +139,9 @@ func (app *App) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("error reading def file %v: %w", app.buildSpec, err)
 		}
-		defer fp.Close()
+		defer func() {
+			_ = fp.Close()
+		}()
 
 		if def, err = parser.ParseDefinitionFile(fp); err != nil {
 			return fmt.Errorf("error parsing definition file %v: %w", app.buildSpec, err)

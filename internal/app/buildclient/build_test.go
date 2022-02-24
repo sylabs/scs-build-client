@@ -55,7 +55,7 @@ func TestStdoutLogger(t *testing.T) {
 				}()
 
 				// restore os.Stdout
-				w.Close()
+				_ = w.Close()
 				os.Stdout = old // restoring the real stdout
 				<-outC
 

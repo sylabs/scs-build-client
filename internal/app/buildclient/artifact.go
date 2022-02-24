@@ -19,7 +19,9 @@ func (app *App) retrieveArtifact(ctx context.Context, bi *build.BuildInfo, filen
 	if err != nil {
 		return fmt.Errorf("error opening file %s for writing: %w", filename, err)
 	}
-	defer fp.Close()
+	defer func() {
+		_ = fp.Close()
+	}()
 
 	h := sha256.New()
 
@@ -36,7 +38,7 @@ func (app *App) retrieveArtifact(ctx context.Context, bi *build.BuildInfo, filen
 		return fmt.Errorf("error getting file description: %w", err)
 	}
 
-	fp.Close()
+	_ = fp.Close()
 
 	// Verify image checksum
 	if values := strings.Split(bi.ImageChecksum, "."); len(values) == 2 {
