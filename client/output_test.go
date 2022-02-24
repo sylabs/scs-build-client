@@ -43,21 +43,6 @@ func TestOutput(t *testing.T) {
 	expiredCtx, cancel := context.WithDeadline(context.Background(), time.Now())
 	defer cancel()
 
-	// Start a mock server
-	m := mockService{t: t}
-	mux := http.NewServeMux()
-	mux.HandleFunc(wsPath, m.ServeWebsocket)
-	s := httptest.NewServer(mux)
-	defer s.Close()
-
-	// Mock server address is fixed for all tests
-	m.httpAddr = s.Listener.Addr().String()
-
-	url, err := url.Parse(s.URL)
-	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
-	}
-
 	// Table of tests to run
 	// nolint:maligned
 	tests := []struct {
@@ -80,6 +65,23 @@ func TestOutput(t *testing.T) {
 	// Loop over test cases
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
+			t.Parallel()
+
+			// Start a mock server
+			m := mockService{t: t}
+			mux := http.NewServeMux()
+			mux.HandleFunc(wsPath, m.ServeWebsocket)
+			s := httptest.NewServer(mux)
+			defer s.Close()
+
+			// Mock server address is fixed for all tests
+			m.httpAddr = s.Listener.Addr().String()
+
+			url, err := url.Parse(s.URL)
+			if err != nil {
+				t.Fatalf("failed to parse URL: %v", err)
+			}
+
 			c, err := client.New(&client.Config{
 				BaseURL:   url.String(),
 				AuthToken: authToken,
