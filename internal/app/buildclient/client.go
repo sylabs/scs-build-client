@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 
 	build "github.com/sylabs/scs-build-client/client"
 	"github.com/sylabs/scs-build-client/internal/pkg/endpoints"
@@ -16,9 +17,6 @@ import (
 	"github.com/sylabs/singularity/pkg/build/types"
 	"github.com/sylabs/singularity/pkg/build/types/parser"
 )
-
-// DefaultBuildArch is defined as amd64
-const DefaultBuildArch = "amd64"
 
 // Config contains set up for application
 type Config struct {
@@ -60,7 +58,7 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 	app.imageSpec = u
 
 	if app.arch == "" {
-		app.arch = DefaultBuildArch
+		app.arch = runtime.GOARCH
 	}
 
 	app.httpClient = &http.Client{

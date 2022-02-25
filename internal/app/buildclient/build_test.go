@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/gorilla/websocket"
@@ -110,9 +111,9 @@ func TestBuildDefinition(t *testing.T) {
 
 			sampleDef := []byte{1, 2, 3, 4}
 
-			br := app.buildDefinition(sampleDef, DefaultBuildArch, libraryRef)
+			br := app.buildDefinition(sampleDef, runtime.GOARCH, libraryRef)
 
-			assert.Equal(t, br.BuilderRequirements["arch"], DefaultBuildArch)
+			assert.Equal(t, br.BuilderRequirements["arch"], runtime.GOARCH)
 			assert.Equal(t, sampleDef, br.DefinitionRaw)
 
 			if libraryRef.Scheme != requestTypeLibrary {

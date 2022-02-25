@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -54,7 +55,7 @@ func getFlagSet() (*pflag.FlagSet, error) {
 
 	fs.String(keyAccessToken, "", "Access token")
 	fs.Bool(keySkipTLSVerify, false, "Skip SSL/TLS certificate verification")
-	fs.String(keyArch, buildclient.DefaultBuildArch, "Requested build architecture")
+	fs.String(keyArch, runtime.GOARCH, "Requested build architecture")
 	fs.String(keyFrontendURL, "https://cloud.sylabs.io", "Sylabs Cloud or Singularity Enterprise URL")
 	fs.String(keyImageSpec, "", "Image spec")
 	fs.Bool(keyForceOverwrite, false, "Overwrite image file if it exists")
