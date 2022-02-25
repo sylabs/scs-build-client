@@ -10,9 +10,7 @@ import (
 var version = ""
 
 func main() {
-	cmd.InitApp(version)
-
-	if err := cmd.Execute(); err != nil {
+	if err := cmd.Execute(version); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

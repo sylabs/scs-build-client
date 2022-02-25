@@ -12,7 +12,7 @@ var rootCmd = &cobra.Command{
 	Short: "Sylabs Cloud Build Client",
 }
 
-func InitApp(version string) {
+func Execute(version string) error {
 	// Add version subcommand
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",
@@ -31,8 +31,6 @@ func InitApp(version string) {
 
 	// Add build subcommand
 	addBuildCommand(rootCmd)
-}
 
-func Execute() error {
 	return rootCmd.Execute()
 }
