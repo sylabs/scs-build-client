@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2022, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -188,7 +188,7 @@ func TestBuild(t *testing.T) {
 		wsCloseCode         int
 		statusResponseCode  int
 		imageResponseCode   int
-		ctx                 context.Context
+		ctx                 context.Context //nolint:containedctx
 	}{
 		{"Success", true, true, true, f.Name(), "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background()},
 		{"SuccessLibraryRef", true, true, true, "library://user/collection/image", "", http.StatusCreated, http.StatusOK, websocket.CloseNormalClosure, http.StatusOK, http.StatusOK, context.Background()},
