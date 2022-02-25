@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 
 	"github.com/gorilla/websocket"
 	build "github.com/sylabs/scs-build-client/client"
@@ -29,23 +28,9 @@ func (s stdoutLogger) Read(messageType int, msg []byte) (int, error) {
 	return 0, errUnknownMessageType
 }
 
-func (app *App) buildDefinition(def []byte, arch string, imageSpec *url.URL) build.BuildRequest {
-	br := build.BuildRequest{
-		DefinitionRaw: def,
-		BuilderRequirements: map[string]string{
-			"arch": arch,
-		},
-	}
-	if imageSpec.Scheme == requestTypeLibrary {
-		br.LibraryRef = imageSpec.String()
-		br.LibraryURL = app.libraryClient.BaseURL.String()
-	}
-	return br
-}
-
-func (app *App) buildArtifact(ctx context.Context, def types.Definition, arch string, imageSpec *url.URL) (*build.BuildInfo, error) {
+func (app *App) buildArtifact(ctx context.Context, def types.Definition, arch string, libraryRef string) (*build.BuildInfo, error) {
 	bi, err := app.buildClient.Submit(ctx, build.BuildRequest{
-		LibraryRef:    imageSpec.String(),
+		LibraryRef:    libraryRef,
 		LibraryURL:    app.libraryClient.BaseURL.String(),
 		DefinitionRaw: def.Raw,
 		BuilderRequirements: map[string]string{

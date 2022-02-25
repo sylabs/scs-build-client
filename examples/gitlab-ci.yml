@@ -5,13 +5,13 @@ build-code-job:
   stage: build
 
   image:
-    name: "buildclient:latest"
+    name: "scs-build:latest"
 
   variables:
     SKIP_VERIFY: "true"
 
   script:
-    - /usr/local/bin/buildclient alpine.def
+    - /usr/local/bin/scs-build alpine.def artifact.sif
 
   artifacts:
     paths:

@@ -28,7 +28,7 @@ jobs:
           docker run -v ${{ github.workspace }}:/app \
           -u $(id -u ${USER}):$(id -g ${USER}) \
           $DOCKER_BUILD_CLIENT \
-          buildclient --output="/app/$OUTPUT_SIF" --skip-verify /app/$DEF_FILE
+          scs-build build --skip-verify /app/$DEF_FILE "/app/$OUTPUT_SIF"
 
       - name: Move Sif
         run: mv ${{ github.workspace }}/$OUTPUT_SIF ${{ github.workspace }}/tmp-sif-path/$OUTPUT_SIF
@@ -52,4 +52,4 @@ jobs:
   #         docker run -v ${{ github.workspace }}:/app \
   #         -u $(id -u ${USER}):$(id -g ${USER}) \
   #         $DOCKER_BUILD_CLIENT \
-  #         buildclient --image-spec $LIBRARY_PATH --skip-verify /app/$DEF_FILE
+  #         scs-build build --skip-verify /app/$DEF_FILE $LIBRARY_PATH

@@ -11,11 +11,11 @@ This project provides a Go client for the Singularity Container Services (SCS) B
 
 This module aims to maintain support for the two most recent stable versions of Go. This corresponds to the Go [Release Maintenance Policy](https://github.com/golang/go/wiki/Go-Release-Cycle#release-maintenance) and [Security Policy](https://golang.org/security), ensuring critical bug fixes and security patches are available for all supported language versions.
 
-## buildclient
+## scs-build
 
 ### Overview
 
-`buildclient` is a tool for invoking [Sylabs Cloud](https://cloud.sylabs.io)
+`scs-build` is a tool for invoking [Sylabs Cloud](https://cloud.sylabs.io)
 and Singularity Enterprise Remote Build without the need for installing and
 configuring Singularity. It is intended to be integrated into a CI/CD workflow.
 
@@ -24,20 +24,20 @@ configuring Singularity. It is intended to be integrated into a CI/CD workflow.
 #### Build and download artifact
 
 ```sh
-buildclient --output alpine_latest.sif --auth-token ${SYLABS_AUTH_TOKEN} docker://alpine
+scs-build build --auth-token ${SYLABS_AUTH_TOKEN} docker://alpine alpine_latest.sif
 ```
 
 #### Build and push to cloud library
 
 ```sh
-buildclient --image-spec library://user/default/alpine:latest --auth-token ${SYLABS_AUTH_TOKEN} alpine.def
+scs-build build --auth-token ${SYLABS_AUTH_TOKEN} alpine.def library://user/default/alpine:latest
 ```
 
 #### Build ephemeral artifact
 
 ```sh
 export SYLABS_AUTH_TOKEN=xxx
-buildclient alpine.def
+scs-build build alpine.def
 ```
 
 `SYLABS_AUTH_TOKEN` is obtained through "Access Tokens" in Sylabs Cloud web UI.
@@ -54,4 +54,4 @@ See [examples/github-actions-ci.yaml](examples/github-actions-ci.yaml) for an ex
 
 Example [gitlab-ci.yml](examples/gitlab-ci.yml) is configured to build using file `alpine.def` contained within the project directory.
 
-This configuration will store the build artifact (`artifact.sif`) within GitLab. Using the `--image-spec` argument to `buildclient`, it is also possible to have it automatically push the resultant build artifact to [Sylabs Cloud](https://cloud.sylabs.io) or a local Singularity Enterprise installation.
+This configuration will store the build artifact (`artifact.sif`) within GitLab. Using the `--image-spec` argument to `scs-build`, it is also possible to have it automatically push the resultant build artifact to [Sylabs Cloud](https://cloud.sylabs.io) or a local Singularity Enterprise installation.

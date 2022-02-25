@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"runtime"
+	"strings"
 
 	build "github.com/sylabs/scs-build-client/client"
 	"github.com/sylabs/scs-build-client/internal/pkg/endpoints"
@@ -20,48 +20,33 @@ import (
 
 // Config contains set up for application
 type Config struct {
-	URL              string
-	AuthToken        string
-	DefFileName      string
-	ArtifactFileName string
-	Arch             string
-	SkipTLSVerify    bool
-	ImageSpec        string
-	Force            bool
+	URL           string
+	AuthToken     string
+	DefFileName   string
+	SkipTLSVerify bool
+	LibraryRef    string
+	Force         bool
 }
 
 // App represents the application instance
 type App struct {
-	httpClient       *http.Client
-	buildClient      *build.Client
-	libraryClient    *library.Client
-	arch             string
-	buildSpec        string
-	artifactFileName string
-	imageSpec        *url.URL
-	force            bool
+	httpClient    *http.Client
+	buildClient   *build.Client
+	libraryClient *library.Client
+	buildSpec     string
+	LibraryRef    *url.URL
+	force         bool
 }
 
 // New creates new application instance
 func New(ctx context.Context, cfg *Config) (*App, error) {
-	app := &App{
-		arch:             cfg.Arch,
-		buildSpec:        cfg.DefFileName,
-		force:            cfg.Force,
-		artifactFileName: cfg.ArtifactFileName,
-	}
-
-	u, err := url.Parse(cfg.ImageSpec)
+	// Parse/validate image spec (local file or library ref)
+	libraryRef, err := url.Parse(cfg.LibraryRef)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing image spec: %w", err)
 	}
-	app.imageSpec = u
 
-	if app.arch == "" {
-		app.arch = runtime.GOARCH
-	}
-
-	app.httpClient = &http.Client{
+	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: cfg.SkipTLSVerify,
@@ -69,14 +54,20 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 		},
 	}
 
-	buildClient, libraryClient, err := getClients(ctx, app.httpClient, cfg.URL, cfg.AuthToken)
+	// Initialize build & library clients
+	buildClient, libraryClient, err := getClients(ctx, httpClient, cfg.URL, cfg.AuthToken)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing client(s): %w", err)
 	}
-	app.buildClient = buildClient
-	app.libraryClient = libraryClient
 
-	return app, nil
+	return &App{
+		buildSpec:     cfg.DefFileName,
+		force:         cfg.Force,
+		LibraryRef:    libraryRef,
+		httpClient:    httpClient,
+		buildClient:   buildClient,
+		libraryClient: libraryClient,
+	}, nil
 }
 
 // getClients returns initialized clients for remote build and cloud library
@@ -109,10 +100,15 @@ func getClients(ctx context.Context, httpClient *http.Client, endpoint, authToke
 }
 
 // Run is the main application entrypoint
-func (app *App) Run(ctx context.Context) error {
-	if _, err := os.Stat(app.artifactFileName); !os.IsNotExist(err) {
-		if !app.force {
-			return fmt.Errorf("file %v already exists", app.artifactFileName)
+func (app *App) Run(ctx context.Context, arch string) error {
+	var artifactFileName string
+
+	if app.LibraryRef.Scheme == "file" || app.LibraryRef.Scheme == "" {
+		artifactFileName = app.LibraryRef.Path
+		if _, err := os.Stat(artifactFileName); !os.IsNotExist(err) {
+			if !app.force {
+				return fmt.Errorf("file %v already exists", artifactFileName)
+			}
 		}
 	}
 
@@ -147,19 +143,23 @@ func (app *App) Run(ctx context.Context) error {
 	}
 
 	// send build request
-	bi, err := app.buildArtifact(ctx, def, app.arch, app.imageSpec)
+	var libraryRef string
+	if strings.HasPrefix(app.LibraryRef.String(), "library://") {
+		libraryRef = app.LibraryRef.String()
+	}
+	bi, err := app.buildArtifact(ctx, def, arch, libraryRef)
 	if err != nil {
 		return fmt.Errorf("error building artifact: %w", err)
 	}
 
-	if app.artifactFileName == "" {
-		if app.imageSpec.Scheme != requestTypeLibrary {
+	if artifactFileName == "" {
+		if app.LibraryRef.Scheme != requestTypeLibrary {
 			fmt.Printf("Build artifact %v is available for 24 hours or less\n", bi.LibraryRef)
 		}
 		return nil
 	}
 
-	if err := app.retrieveArtifact(ctx, bi, app.artifactFileName, app.arch); err != nil {
+	if err := app.retrieveArtifact(ctx, bi, artifactFileName, arch); err != nil {
 		return fmt.Errorf("error retrieving build artifact: %w", err)
 	}
 	return nil
