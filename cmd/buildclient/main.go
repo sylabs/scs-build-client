@@ -6,11 +6,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/sylabs/scs-build-client/internal/app/buildclient"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -71,7 +74,7 @@ func getConfig() (*viper.Viper, error) {
 	return v, v.BindPFlags(fs)
 }
 
-func main() {
+func run() error {
 	pflag.Usage = Usage
 	v, err := getConfig()
 	if err != nil {
@@ -83,7 +86,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	app, err := buildclient.New(ctx, &buildclient.Config{
 		URL:              v.GetString(keyFrontendURL),
@@ -97,11 +101,34 @@ func main() {
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Application init error: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("application init error: %w", err)
 	}
 
-	if err := app.Run(ctx); err != nil {
-		fmt.Fprintf(os.Stderr, "Application error: %v\n", err)
+	// set up signal handler
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		fmt.Fprintf(os.Stderr, "Shutting down due to signal: %v\n", <-c)
+		cancel()
+	}()
+
+	// run application
+	g := new(errgroup.Group)
+
+	g.Go(func() error {
+		return app.Run(ctx)
+	})
+
+	if err := g.Wait(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	}
+
+	return err
+}
+
+func main() {
+	if err := run(); err != nil {
 		os.Exit(1)
 	}
 }
