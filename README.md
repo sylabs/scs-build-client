@@ -54,4 +54,4 @@ See [examples/github-actions-ci.yaml](examples/github-actions-ci.yaml) for an ex
 
 Example [gitlab-ci.yml](examples/gitlab-ci.yml) is configured to build using file `alpine.def` contained within the project directory.
 
-This configuration will store the build artifact (`artifact.sif`) within GitLab. Using the `--image-spec` argument to `scs-build`, it is also possible to have it automatically push the resultant build artifact to [Sylabs Cloud](https://cloud.sylabs.io) or a local Singularity Enterprise installation.
+This example configuration will store the build artifact (in this case, `artifact.sif`) within GitLab. Using a library reference (ie. `library://myuser/myproject/image`) will result in the build artifact automatically being pushed to [Sylabs Cloud](https://cloud.sylabs.io) or a local Singularity Enterprise installation.
