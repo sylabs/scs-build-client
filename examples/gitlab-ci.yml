@@ -11,7 +11,7 @@ build-code-job:
     SKIP_VERIFY: "true"
 
   script:
-    - /usr/local/bin/scs-build alpine.def artifact.sif
+    - /usr/local/bin/scs-build build alpine.def artifact.sif
 
   artifacts:
     paths:
