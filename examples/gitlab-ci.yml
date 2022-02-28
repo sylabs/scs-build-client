@@ -11,6 +11,8 @@ build-code-job:
     SKIP_VERIFY: "true"
 
   script:
+    # This example uses cloud.sylabs.io as default builder. Use "--url URL" to specify
+    # local Singularity Enterprise environment.
     - /usr/local/bin/scs-build build alpine.def artifact.sif
 
   artifacts:
