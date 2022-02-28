@@ -14,7 +14,6 @@ import (
 
 	build "github.com/sylabs/scs-build-client/client"
 	"github.com/sylabs/scs-build-client/internal/pkg/endpoints"
-	"github.com/sylabs/scs-library-client/client"
 	library "github.com/sylabs/scs-library-client/client"
 	"github.com/sylabs/singularity/pkg/build/types"
 	"github.com/sylabs/singularity/pkg/build/types/parser"
@@ -82,7 +81,7 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 	return app, nil
 }
 
-func getFrontendURL(r *client.Ref, urlOverride string) (string, error) {
+func getFrontendURL(r *library.Ref, urlOverride string) (string, error) {
 	if urlOverride == "" && (r == nil || r.Host == "") {
 		return defaultFrontendURL, nil
 	}

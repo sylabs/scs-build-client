@@ -70,7 +70,7 @@ func TestGetFrontendConfig(t *testing.T) {
 			}))
 			defer ts.Close()
 
-			result, err := GetFrontendConfig(ctx, http.DefaultClient, ts.URL)
+			result, err := GetFrontendConfig(ctx, false, ts.URL)
 			if tt.expectedErr == nil && assert.NoError(t, err) {
 				assert.Equal(t, result.LibraryAPI.URI, tt.expectedLibraryURI)
 				assert.Equal(t, result.BuildAPI.URI, tt.expectedBuildURI)
