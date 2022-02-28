@@ -4,6 +4,7 @@ package endpoints
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -31,7 +32,12 @@ func getFrontendConfigURL(frontendURL string) string {
 	return url + frontendConfigPath
 }
 
-func GetFrontendConfig(ctx context.Context, httpClient *http.Client, frontendURL string) (*FrontendConfig, error) {
+func GetFrontendConfig(ctx context.Context, skipVerify bool, frontendURL string) (*FrontendConfig, error) {
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: skipVerify}
+
+	httpClient := &http.Client{Transport: tr}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, getFrontendConfigURL(frontendURL), nil)
 	if err != nil {
 		return nil, err

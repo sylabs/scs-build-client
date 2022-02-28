@@ -34,7 +34,7 @@ func addBuildCommand(rootCmd *cobra.Command) {
 	buildCmd.Flags().String(keyAccessToken, "", "Access token")
 	buildCmd.Flags().Bool(keySkipTLSVerify, false, "Skip SSL/TLS certificate verification")
 	buildCmd.Flags().StringSlice(keyArch, []string{runtime.GOARCH}, "Requested build architecture")
-	buildCmd.Flags().String(keyFrontendURL, "https://cloud.sylabs.io", "Sylabs Cloud or Singularity Enterprise URL")
+	buildCmd.Flags().String(keyFrontendURL, "", "Sylabs Cloud or Singularity Enterprise URL")
 	buildCmd.Flags().Bool(keyForceOverwrite, false, "Overwrite image file if it exists")
 	rootCmd.AddCommand(buildCmd)
 }

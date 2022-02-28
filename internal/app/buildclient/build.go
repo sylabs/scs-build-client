@@ -12,8 +12,6 @@ import (
 	"github.com/sylabs/singularity/pkg/build/types"
 )
 
-const requestTypeLibrary = "library"
-
 var errUnknownMessageType = errors.New("unknown message type")
 
 type stdoutLogger struct{}
