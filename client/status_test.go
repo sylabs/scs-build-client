@@ -10,7 +10,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 	"time"
 )
@@ -37,16 +36,9 @@ func TestStatus(t *testing.T) {
 	s := httptest.NewServer(&m)
 	defer s.Close()
 
-	// Enough of a struct to test with
-	url, err := url.Parse(s.URL)
+	c, err := NewClient(OptBaseURL(s.URL))
 	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
-	}
-	c, err := New(&Config{
-		BaseURL: url.String(),
-	})
-	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
+		t.Fatal(err)
 	}
 
 	// ID to test with

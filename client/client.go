@@ -6,6 +6,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,20 +14,71 @@ import (
 	"strings"
 )
 
-// Config contains the client configuration.
-type Config struct {
-	// Base URL of the service (https://build.sylabs.io is used if not supplied).
-	BaseURL string
-	// Auth token to include in the Authorization header of each request (if supplied).
-	AuthToken string
-	// User agent to include in each request (if supplied).
-	UserAgent string
-	// HTTPClient to use to make HTTP requests (if supplied).
-	HTTPClient *http.Client
+// errUnsupportedProtocolScheme is returned when an unsupported protocol scheme is encountered.
+var errUnsupportedProtocolScheme = errors.New("unsupported protocol scheme")
+
+// normalizeURL parses rawURL, and ensures the path component is terminated with a separator.
+func normalizeURL(rawURL string) (*url.URL, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return nil, fmt.Errorf("%w %s", errUnsupportedProtocolScheme, u.Scheme)
+	}
+
+	// Ensure path is terminated with a separator, to prevent url.ResolveReference from stripping
+	// the final path component of BaseURL when constructing request URL from a relative path.
+	if !strings.HasSuffix(u.Path, "/") {
+		u.Path += "/"
+	}
+
+	return u, nil
 }
 
-// DefaultConfig is a configuration that uses default values.
-var DefaultConfig = &Config{}
+// clientOptions describes the options for a Client.
+type clientOptions struct {
+	baseURL     string
+	bearerToken string
+	userAgent   string
+	httpClient  *http.Client
+}
+
+// Option are used to populate co.
+type Option func(co *clientOptions) error
+
+// OptBaseURL sets the base URL of the build server to url.
+func OptBaseURL(url string) Option {
+	return func(co *clientOptions) error {
+		co.baseURL = url
+		return nil
+	}
+}
+
+// OptBearerToken sets the bearer token to include in the "Authorization" header of each request.
+func OptBearerToken(token string) Option {
+	return func(co *clientOptions) error {
+		co.bearerToken = token
+		return nil
+	}
+}
+
+// OptUserAgent sets the HTTP user agent to include in the "User-Agent" header of each request.
+func OptUserAgent(agent string) Option {
+	return func(co *clientOptions) error {
+		co.userAgent = agent
+		return nil
+	}
+}
+
+// OptHTTPClient sets the client to use to make HTTP requests.
+func OptHTTPClient(c *http.Client) Option {
+	return func(co *clientOptions) error {
+		co.httpClient = c
+		return nil
+	}
+}
 
 // Client describes the client details.
 type Client struct {
@@ -40,48 +92,40 @@ type Client struct {
 	HTTPClient *http.Client
 }
 
-const defaultBaseURL = "https://build.sylabs.io"
+const defaultBaseURL = "https://build.sylabs.io/"
 
-// New sets up a new build service client with the specified base URL and auth token.
-func New(cfg *Config) (c *Client, err error) {
-	if cfg == nil {
-		cfg = DefaultConfig
+// NewClient returns a Client configured according to opts.
+//
+// By default, the Sylabs Build Service is used. To override this behaviour, use OptBaseURL.
+//
+// By default, requests are not authenticated. To override this behaviour, use OptBearerToken.
+func NewClient(opts ...Option) (*Client, error) {
+	co := clientOptions{
+		baseURL:    defaultBaseURL,
+		httpClient: http.DefaultClient,
 	}
 
-	// Determine base URL
-	bu := defaultBaseURL
-	if cfg.BaseURL != "" {
-		bu = cfg.BaseURL
+	// Apply options.
+	for _, opt := range opts {
+		if err := opt(&co); err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
 	}
-	baseURL, err := url.Parse(bu)
+
+	c := Client{
+		AuthToken:  co.bearerToken,
+		UserAgent:  co.userAgent,
+		HTTPClient: co.httpClient,
+	}
+
+	// Normalize base URL.
+	u, err := normalizeURL(co.baseURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w", err)
 	}
-	if baseURL.Scheme != "http" && baseURL.Scheme != "https" {
-		return nil, fmt.Errorf("unsupported protocol scheme %q", baseURL.Scheme)
-	}
+	c.BaseURL = u
 
-	// If baseURL has a path component, ensure it is terminated with a separator, to prevent
-	// url.ResolveReference from stripping the final component of the path when constructing
-	// request URL.
-	if p := baseURL.Path; p != "" && !strings.HasSuffix(p, "/") {
-		baseURL.Path += "/"
-	}
-
-	c = &Client{
-		BaseURL:   baseURL,
-		AuthToken: cfg.AuthToken,
-		UserAgent: cfg.UserAgent,
-	}
-
-	// Set HTTP client
-	if cfg.HTTPClient != nil {
-		c.HTTPClient = cfg.HTTPClient
-	} else {
-		c.HTTPClient = http.DefaultClient
-	}
-
-	return c, nil
+	return &c, nil
 }
 
 // newRequest returns a new Request given a method, relative path, query, and optional body.

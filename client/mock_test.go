@@ -168,11 +168,6 @@ func TestBuild(t *testing.T) {
 	// Mock server address is fixed for all tests
 	m.httpAddr = s.Listener.Addr().String()
 
-	url, err := url.Parse(s.URL)
-	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
-	}
-
 	// Table of tests to run
 	// nolint:maligned
 	tests := []struct {
@@ -202,12 +197,12 @@ func TestBuild(t *testing.T) {
 	// Loop over test cases
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			c, err := New(&Config{
-				BaseURL:   url.String(),
-				AuthToken: authToken,
-			})
+			c, err := NewClient(
+				OptBaseURL(s.URL),
+				OptBearerToken(authToken),
+			)
 			if err != nil {
-				t.Fatalf("failed to get new builder: %v", err)
+				t.Fatal(err)
 			}
 
 			// Set the response codes for each stage of the build
@@ -221,7 +216,7 @@ func TestBuild(t *testing.T) {
 			bd, err := c.Submit(tt.ctx, BuildRequest{
 				DefinitionRaw: []byte{},
 				LibraryRef:    tt.imagePath,
-				LibraryURL:    url.String(),
+				LibraryURL:    s.URL,
 			})
 			if !tt.expectSubmitSuccess {
 				// Ensure the handler returned an error

@@ -128,13 +128,12 @@ func getClients(ctx context.Context, skipVerify bool, endpoint, authToken, userA
 	tr := http.DefaultTransport.(*http.Transport).Clone()
 	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: skipVerify}
 
-	// Initialize scs-build-client
-	buildClient, err := build.New(&build.Config{
-		BaseURL:    feCfg.BuildAPI.URI,
-		AuthToken:  authToken,
-		HTTPClient: &http.Client{Transport: tr},
-		UserAgent:  userAgent,
-	})
+	buildClient, err := build.NewClient(
+		build.OptBaseURL(feCfg.BuildAPI.URI),
+		build.OptBearerToken(authToken),
+		build.OptUserAgent(authToken),
+		build.OptHTTPClient(&http.Client{Transport: tr}),
+	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error initializing build client: %w", err)
 	}
