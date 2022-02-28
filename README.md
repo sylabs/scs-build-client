@@ -27,10 +27,17 @@ configuring Singularity. It is intended to be integrated into a CI/CD workflow.
 scs-build build --auth-token ${SYLABS_AUTH_TOKEN} docker://alpine alpine_latest.sif
 ```
 
-#### Build and push to cloud library
+#### Build and push to default cloud library (cloud.sylabs.io)
 
 ```sh
-scs-build build --auth-token ${SYLABS_AUTH_TOKEN} alpine.def library://user/default/alpine:latest
+scs-build build --auth-token ${SYLABS_AUTH_TOKEN} alpine.def library:user/default/alpine:latest
+```
+
+#### Build and push to local Singularity Enterprise
+
+```sh
+scs-build build --auth-token ${SYLABS_AUTH_TOKEN} alpine.def \
+    library://cloud.enterprise.local/user/default/alpine:latest
 ```
 
 #### Build ephemeral artifact
@@ -41,6 +48,13 @@ scs-build build alpine.def
 ```
 
 `SYLABS_AUTH_TOKEN` is obtained through "Access Tokens" in Sylabs Cloud web UI.
+
+#### Build ephemeral artifact in local Singularity Enterprise
+
+```sh
+export SYLABS_AUTH_TOKEN=xxx
+scs-build build --url https://cloud.enterprise.local alpine.def
+```
 
 ### CI/CD Integration
 
@@ -54,4 +68,4 @@ See [examples/github-actions-ci.yaml](examples/github-actions-ci.yaml) for an ex
 
 Example [gitlab-ci.yml](examples/gitlab-ci.yml) is configured to build using file `alpine.def` contained within the project directory.
 
-This example configuration will store the build artifact (in this case, `artifact.sif`) within GitLab. Using a library reference (ie. `library://myuser/myproject/image`) will result in the build artifact automatically being pushed to [Sylabs Cloud](https://cloud.sylabs.io) or a local Singularity Enterprise installation.
+This example configuration will store the build artifact (in this case, `artifact.sif`) within GitLab. Using a library reference (ie. `library:myuser/myproject/image`) will result in the build artifact automatically being pushed to [Sylabs Cloud](https://cloud.sylabs.io) or a local Singularity Enterprise installation.
