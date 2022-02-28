@@ -7,6 +7,7 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -42,9 +43,13 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, or OutputReader)
 
 	dialer := websocket.DefaultDialer
 
-	if c.HTTPClient != nil {
-		if tr, ok := c.HTTPClient.Transport.(*http.Transport); ok {
-			dialer.TLSClientConfig = tr.TLSClientConfig
+	// Due to this issue (https://github.com/gorilla/websocket/issues/601), it is not possible
+	// clone the 'c.HTTPClient' transport, so we take only the InsecureSkipVerify and RootCAs
+	// parameters.
+	if tr, ok := c.HTTPClient.Transport.(*http.Transport); ok {
+		dialer.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: tr.TLSClientConfig.InsecureSkipVerify,
+			RootCAs:            tr.TLSClientConfig.RootCAs,
 		}
 	}
 
