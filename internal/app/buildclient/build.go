@@ -11,14 +11,13 @@ import (
 	"os"
 
 	build "github.com/sylabs/scs-build-client/client"
-	"github.com/sylabs/singularity/pkg/build/types"
 )
 
-func (app *App) buildArtifact(ctx context.Context, def types.Definition, arch string, libraryRef string) (*build.BuildInfo, error) {
+func (app *App) buildArtifact(ctx context.Context, def []byte, arch string, libraryRef string) (*build.BuildInfo, error) {
 	bi, err := app.buildClient.Submit(ctx, build.BuildRequest{
 		LibraryRef:    libraryRef,
 		LibraryURL:    app.libraryClient.BaseURL.String(),
-		DefinitionRaw: def.Raw,
+		DefinitionRaw: def,
 		BuilderRequirements: map[string]string{
 			"arch": arch,
 		},

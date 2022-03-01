@@ -6,6 +6,7 @@
 package buildclient
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
@@ -18,8 +19,6 @@ import (
 	build "github.com/sylabs/scs-build-client/client"
 	"github.com/sylabs/scs-build-client/internal/pkg/endpoints"
 	library "github.com/sylabs/scs-library-client/client"
-	"github.com/sylabs/singularity/pkg/build/types"
-	"github.com/sylabs/singularity/pkg/build/types/parser"
 )
 
 // Config contains set up for application
@@ -150,6 +149,26 @@ func getClients(ctx context.Context, skipVerify bool, endpoint, authToken string
 	return buildClient, libraryClient, nil
 }
 
+// definitionFromURI attempts to parse a URI from raw. If raw contains a URI, a definition file
+// representing it is returned, and ok is set to true. Otherwise, ok is set to false.
+func definitionFromURI(raw string) (def []byte, ok bool) {
+	var u []string
+	if strings.Contains(raw, "://") {
+		u = strings.SplitN(raw, "://", 2)
+	} else if strings.Contains(raw, ":") {
+		u = strings.SplitN(raw, ":", 2)
+	} else {
+		return nil, false
+	}
+
+	var b bytes.Buffer
+
+	fmt.Fprintln(&b, "bootstrap:", u[0])
+	fmt.Fprintln(&b, "from:", u[1])
+
+	return b.Bytes(), true
+}
+
 // Run is the main application entrypoint
 func (app *App) Run(ctx context.Context, arch string) error {
 	var libraryRef string
@@ -169,34 +188,17 @@ func (app *App) Run(ctx context.Context, arch string) error {
 		}
 	}
 
-	// Parse build spec (for example, either "docker://..." or filename)
-	var def types.Definition
-	var err error
+	var def []byte
 
-	// Attempt to process build spec as URI
-	def, err = types.NewDefinitionFromURI(app.buildSpec)
-	if err != nil {
-		// Attempt to process build spec as filename
-		isValid, err := parser.IsValidDefinition(app.buildSpec)
-		if err != nil {
-			return fmt.Errorf("error validating def file: %w", err)
-		}
-		if !isValid {
-			return fmt.Errorf("invalid def file %v", app.buildSpec)
-		}
-
-		// read build definition into buffer
-		fp, err := os.Open(app.buildSpec)
+	// Build spec could be a URI, or the path to a definition file.
+	if b, ok := definitionFromURI(app.buildSpec); ok {
+		def = b
+	} else {
+		b, err := os.ReadFile(app.buildSpec)
 		if err != nil {
 			return fmt.Errorf("error reading def file %v: %w", app.buildSpec, err)
 		}
-		defer func() {
-			_ = fp.Close()
-		}()
-
-		if def, err = parser.ParseDefinitionFile(fp); err != nil {
-			return fmt.Errorf("error parsing definition file %v: %w", app.buildSpec, err)
-		}
+		def = b
 	}
 
 	// send build request
