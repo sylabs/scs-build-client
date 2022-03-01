@@ -1,0 +1,48 @@
+project_name: scs-build-client
+
+release:
+  github:
+    owner: sylabs
+    name: scs-build-client
+  prerelease: auto
+
+builds:
+  - id: scs-build
+    main: ./cmd/scs-build
+    binary: scs-build
+    flags: '-trimpath'
+    ldflags: '-s -w -X main.version={{ .Version }} -X main.commit={{ .FullCommit }} -X main.date={{ .CommitDate }} -X main.builtBy=goreleaser'
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - '6'
+      - '7'
+    mod_timestamp: '{{ .CommitTimestamp }}'
+
+archives:
+  - format: tar.gz
+    wrap_in_directory: 'true'
+    name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    files:
+      - LICENSE.md
+      - README.md
+
+checksum:
+  name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^dev:'
+      - '^docs:'
+      - '^test:'
+      - '^Merge branch'
+      - '^Merge pull request'
