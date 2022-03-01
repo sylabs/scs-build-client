@@ -56,6 +56,13 @@ export SYLABS_AUTH_TOKEN=xxx
 scs-build build --url https://cloud.enterprise.local alpine.def
 ```
 
+#### Build ephemeral artifact using Docker image
+
+```sh
+export SYLABS_AUTH_TOKEN=xxx
+docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" scs-build:latest build docker://alpine
+```
+
 ### CI/CD Integration
 
 #### GitHub Actions
