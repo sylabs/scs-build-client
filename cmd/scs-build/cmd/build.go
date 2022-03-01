@@ -46,6 +46,10 @@ var buildCmd = &cobra.Command{
 
       scs-build build docker://alpine alpine_latest.sif
 
+  Build local artifact on Singularity Enterprise:
+
+      scs-build build --url https://cloud.enterprise.local --skip-verify docker://alpine alpine_latest.sif
+
   Build ephemeral artifact:
 
       scs-build build alpine.def
