@@ -18,24 +18,16 @@ import (
 	"github.com/sylabs/scs-build-client/client"
 )
 
-type TestOutputReader struct {
-	ReadFully bool
-	ReadErr   error
+type testOutputWriter struct {
+	fully bool
+	err   error
 }
 
-func (tor TestOutputReader) Read(messageType int, p []byte) (int, error) {
-	// Print to terminal
-	switch messageType {
-	case websocket.TextMessage:
-		fmt.Printf("%s", string(p))
-	case websocket.BinaryMessage:
-		fmt.Print("Ignoring binary message")
+func (tor testOutputWriter) Write(p []byte) (int, error) {
+	if tor.fully {
+		return len(p), tor.err
 	}
-
-	if tor.ReadFully {
-		return len(p), tor.ReadErr
-	}
-	return len(p) - 1, tor.ReadErr
+	return len(p) - 1, tor.err
 }
 
 func TestOutput(t *testing.T) {
@@ -94,9 +86,9 @@ func TestOutput(t *testing.T) {
 			m.wsResponseCode = tt.wsResponseCode
 			m.wsCloseCode = tt.wsCloseCode
 
-			tor := TestOutputReader{
-				ReadFully: tt.outputReadFully,
-				ReadErr:   tt.outputReadErr,
+			tor := testOutputWriter{
+				fully: tt.outputReadFully,
+				err:   tt.outputReadErr,
 			}
 			err = c.GetOutput(tt.ctx, "id", tor)
 			if tt.expectSuccess {

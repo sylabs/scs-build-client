@@ -236,9 +236,9 @@ func TestBuild(t *testing.T) {
 				t.Fatalf("unexpected submit failure: %v", err)
 			}
 
-			tor := TestOutputReader{
-				ReadFully: true,
-				ReadErr:   nil,
+			tor := testOutputWriter{
+				fully: true,
+				err:   nil,
 			}
 			err = c.GetOutput(tt.ctx, bd.ID, tor)
 			if tt.expectStreamSuccess {

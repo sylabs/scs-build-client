@@ -7,27 +7,12 @@ package buildclient
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"os"
 
-	"github.com/gorilla/websocket"
 	build "github.com/sylabs/scs-build-client/client"
 	"github.com/sylabs/singularity/pkg/build/types"
 )
-
-var errUnknownMessageType = errors.New("unknown message type")
-
-type stdoutLogger struct{}
-
-func (s stdoutLogger) Read(messageType int, msg []byte) (int, error) {
-	switch messageType {
-	case websocket.TextMessage:
-		return fmt.Print(string(msg))
-	case websocket.BinaryMessage:
-		return fmt.Print("Ignoring binary message")
-	}
-	return 0, errUnknownMessageType
-}
 
 func (app *App) buildArtifact(ctx context.Context, def types.Definition, arch string, libraryRef string) (*build.BuildInfo, error) {
 	bi, err := app.buildClient.Submit(ctx, build.BuildRequest{
@@ -41,7 +26,7 @@ func (app *App) buildArtifact(ctx context.Context, def types.Definition, arch st
 	if err != nil {
 		return nil, fmt.Errorf("error submitting remote build: %w", err)
 	}
-	if err := app.buildClient.GetOutput(ctx, bi.ID, stdoutLogger{}); err != nil {
+	if err := app.buildClient.GetOutput(ctx, bi.ID, os.Stdout); err != nil {
 		return nil, fmt.Errorf("error streaming remote build output: %w", err)
 	}
 	if bi, err = app.buildClient.GetStatus(ctx, bi.ID); err != nil {
