@@ -7,7 +7,9 @@ package cmd
 
 import (
 	"fmt"
-	"os"
+	"io"
+	"runtime"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 )
@@ -17,20 +19,40 @@ var rootCmd = &cobra.Command{
 	Short: "Sylabs Cloud Build Client",
 }
 
-func Execute(version string) error {
+func writeVersion(w io.Writer, version, date, builtBy, commit, state string) {
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	defer tw.Flush()
+
+	fmt.Fprintf(tw, "Version:\t%v\n", version)
+
+	if builtBy != "" {
+		fmt.Fprintf(tw, "By:\t%v\n", builtBy)
+	}
+
+	if commit != "" {
+		if state == "" {
+			fmt.Fprintf(tw, "Commit:\t%v\n", commit)
+		} else {
+			fmt.Fprintf(tw, "Commit:\t%v (%v)\n", commit, state)
+		}
+	}
+
+	if date != "" {
+		fmt.Fprintf(tw, "Date:\t%v\n", date)
+	}
+
+	fmt.Fprintf(tw, "Runtime:\t%v (%v/%v)\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
+}
+
+func Execute(version, date, builtBy, commit, state string) error {
 	// Add version subcommand
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",
-		Short: "Print scs-build version",
+		Short: "Display version information",
+		Long:  "Display binary version, and build info.",
+		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			product := "scs-build"
-			verStr := product
-			if version == "" {
-				verStr += " <unknown version>"
-			} else {
-				verStr += " " + version
-			}
-			fmt.Fprintln(os.Stderr, verStr)
+			writeVersion(cmd.OutOrStdout(), version, date, builtBy, commit, state)
 		},
 	})
 
