@@ -1,0 +1,60 @@
+# Copyright (c) 2022, Sylabs Inc. All rights reserved.
+# This software is licensed under a 3-clause BSD license. Please consult the
+# LICENSE.md file distributed with the sources of this project regarding your
+# rights to use or distribute this software.
+
+name: Build Def
+on:
+  push:
+    branches:
+      - "main"
+env:
+  DOCKER_BUILD_CLIENT: "<DOCKERHUB_IMAGE>" # REPLACE with DockerHub or other hosted build-client docker image
+  DEF_FILE: "alpine.def" # REPLACE with Def file in a repo.
+  OUTPUT_SIF: "alpine.sif" # REPLACE with SIF name
+  LIBRARY_PATH: "library:<PROJECT>/<REPO>/<IMG>:<TAG>" # REPLACE with library path to store sif.
+
+jobs:
+
+  # Build SIF and store SIF as an CI artifact.
+  build-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Make Tmp Dir
+        run: |
+          mkdir -p ${{ github.workspace }}/tmp-sif-path
+
+      - name: Build image
+        env:
+          SYLABS_AUTH_TOKEN: ${{ secrets.SYLABS_AUTH_TOKEN }}
+        run: |
+          docker run -v ${{ github.workspace }}:/app \
+          -u $(id -u ${USER}):$(id -g ${USER}) \
+          $DOCKER_BUILD_CLIENT \
+          scs-build build --skip-verify /app/$DEF_FILE "/app/$OUTPUT_SIF"
+
+      - name: Move Sif
+        run: mv ${{ github.workspace }}/$OUTPUT_SIF ${{ github.workspace }}/tmp-sif-path/$OUTPUT_SIF
+
+      - name: Save image
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.OUTPUT_SIF }}
+          path: ${{ github.workspace }}/tmp-sif-path
+
+  # Build SIF and Push to cloud.sylabs.io
+  # push-cloud:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+
+  #     - name: Build and Push SIF
+  #       env:
+  #         SYLABS_AUTH_TOKEN: ${{ secrets.SYLABS_AUTH_TOKEN }}
+  #       run: |
+  #         docker run -v ${{ github.workspace }}:/app \
+  #         -u $(id -u ${USER}):$(id -g ${USER}) \
+  #         $DOCKER_BUILD_CLIENT \
+  #         scs-build build --skip-verify /app/$DEF_FILE $LIBRARY_PATH
