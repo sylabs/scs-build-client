@@ -26,10 +26,28 @@ const (
 )
 
 var buildCmd = &cobra.Command{
-	Use:   "build",
-	Short: "Execute remote build on Sylabs Cloud or Singularity Enterprise",
+	Use:   "build [flags] <build spec> <image path>",
+	Short: "Perform remote build on Sylabs Cloud (https://cloud.sylabs.io) or Singularity Enterprise",
 	Args:  cobra.MinimumNArgs(1),
 	RunE:  executeBuildCmd,
+	Example: `
+  Build and push artifact to cloud library:
+
+      scs-build build alpine.def library:user/project/image:tag
+
+  Build and push artifact to Singularity Enterprise:
+
+      scs-build build alpine.def library://cloud.enterprise.local/user/project/image:tag
+
+  Build local artifact:
+
+      scs-build build docker://alpine alpine_latest.sif
+
+  Build ephemeral artifact:
+
+      scs-build build alpine.def
+
+  Note: ephemeral artifacts are short-lived and are usually deleted within 24 hours.`,
 }
 
 func addBuildCommand(rootCmd *cobra.Command) {
