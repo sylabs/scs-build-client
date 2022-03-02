@@ -1,48 +1,71 @@
-project_name: scs-build-client
-
 release:
-  github:
-    owner: sylabs
-    name: scs-build-client
   prerelease: auto
 
+changelog:
+  use: github-native
+
+gomod:
+  proxy: true
+  env:
+    - GOPROXY=https://proxy.golang.org,direct
+    - GOSUMDB=sum.golang.org
+
 builds:
-  - id: scs-build
-    main: ./cmd/scs-build
+  - id: darwin-builds
     binary: scs-build
-    flags: '-trimpath'
-    ldflags: '-s -w -X main.version={{ .Version }} -X main.commit={{ .FullCommit }} -X main.date={{ .CommitDate }} -X main.builtBy=goreleaser'
-    env:
-      - CGO_ENABLED=0
     goos:
       - darwin
+    goarch:
+      - amd64
+      - arm64
+    main: &build-main ./cmd/scs-build
+    mod_timestamp: &build-timestamp '{{ .CommitTimestamp }}'
+    env: &build-env
+      - CGO_ENABLED=0
+    flags: &build-flags '-trimpath'
+    ldflags: &build-ldflags |
+      -s
+      -w
+      -X main.version={{ .Version }}
+      -X main.date={{ .CommitDate }}
+      -X main.builtBy=goreleaser
+      -X main.commit={{ .FullCommit }}
+
+  - id: linux-builds
+    binary: scs-build
+    goos:
       - linux
     goarch:
       - amd64
-      - arm
       - arm64
-    goarm:
-      - '6'
-      - '7'
-    mod_timestamp: '{{ .CommitTimestamp }}'
+    main: *build-main
+    mod_timestamp: *build-timestamp
+    env: *build-env
+    flags: *build-flags
+    ldflags: *build-ldflags
+
+  - id: windows-builds
+    binary: scs-build
+    goos:
+      - windows
+    goarch:
+      - amd64
+    main: *build-main
+    mod_timestamp: *build-timestamp
+    env: *build-env
+    flags: *build-flags
+    ldflags: *build-ldflags
 
 archives:
-  - format: tar.gz
-    wrap_in_directory: 'true'
-    name_template: '{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    files:
-      - LICENSE.md
-      - README.md
+  - id: darwin-archives
+    builds:
+      - darwin-builds
 
-checksum:
-  name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
+  - id: linux-archives
+    builds:
+      - linux-builds
 
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - '^dev:'
-      - '^docs:'
-      - '^test:'
-      - '^Merge branch'
-      - '^Merge pull request'
+  - id: windows-archives
+    format: zip
+    builds:
+      - windows-builds
