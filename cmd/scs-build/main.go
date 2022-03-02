@@ -8,20 +8,10 @@ package main
 import (
 	"fmt"
 	"os"
-
-	"github.com/sylabs/scs-build-client/cmd/scs-build/cmd"
-)
-
-var (
-	version = "unknown"
-	date    = ""
-	builtBy = ""
-	commit  = ""
-	state   = ""
 )
 
 func main() {
-	if err := cmd.Execute(version, date, builtBy, commit, state); err != nil {
+	if err := execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

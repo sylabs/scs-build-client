@@ -3,7 +3,7 @@
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
 
-package cmd
+package main
 
 import (
 	"fmt"
@@ -19,7 +19,15 @@ var rootCmd = &cobra.Command{
 	Short: "Sylabs Cloud Build Client",
 }
 
-func writeVersion(w io.Writer, version, date, builtBy, commit, state string) {
+// Build metadata set by linker.
+var (
+	version = "unknown"
+	date    = ""
+	builtBy = ""
+	commit  = ""
+)
+
+func writeVersion(w io.Writer) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	defer tw.Flush()
 
@@ -30,11 +38,7 @@ func writeVersion(w io.Writer, version, date, builtBy, commit, state string) {
 	}
 
 	if commit != "" {
-		if state == "" {
-			fmt.Fprintf(tw, "Commit:\t%v\n", commit)
-		} else {
-			fmt.Fprintf(tw, "Commit:\t%v (%v)\n", commit, state)
-		}
+		fmt.Fprintf(tw, "Commit:\t%v\n", commit)
 	}
 
 	if date != "" {
@@ -44,7 +48,7 @@ func writeVersion(w io.Writer, version, date, builtBy, commit, state string) {
 	fmt.Fprintf(tw, "Runtime:\t%v (%v/%v)\n", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }
 
-func Execute(version, date, builtBy, commit, state string) error {
+func execute() error {
 	// Add version subcommand
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",
@@ -52,7 +56,7 @@ func Execute(version, date, builtBy, commit, state string) error {
 		Long:  "Display binary version, and build info.",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			writeVersion(cmd.OutOrStdout(), version, date, builtBy, commit, state)
+			writeVersion(cmd.OutOrStdout())
 		},
 	})
 
