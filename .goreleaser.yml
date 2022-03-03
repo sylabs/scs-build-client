@@ -69,3 +69,12 @@ archives:
     format: zip
     builds:
       - windows-builds
+
+dockers:
+  - image_templates:
+      - sylabsio/scs-build:latest
+      - sylabsio/scs-build:{{ .Major }}-amd64
+      - sylabsio/scs-build:{{ .Major }}.{{ .Minor }}-amd64
+      - sylabsio/scs-build:{{ .Major }}.{{ .Minor }}.{{ .Patch }}-amd64
+    skip_push: auto
+    dockerfile: ./build/docker/scs-build/Dockerfile
