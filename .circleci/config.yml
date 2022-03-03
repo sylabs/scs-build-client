@@ -76,6 +76,11 @@ jobs:
     executor: golang-latest
     steps:
       - checkout
+      - setup_remote_docker:
+          version: &docker-version 20.10.11
+      - run:
+          name: Install Docker
+          command: curl -sL https://get.docker.com | bash
       - run:
           name: Test Release
           command: curl -sL https://git.io/goreleaser | bash -s -- --snapshot --skip-publish
@@ -84,6 +89,14 @@ jobs:
     executor: golang-latest
     steps:
       - checkout
+      - setup_remote_docker:
+          version: &docker-version 20.10.11
+      - run:
+          name: Install Docker
+          command: curl -sL https://get.docker.com | bash
+      - run:
+          name: Authenticate with DockerHub
+          command: echo "${DOCKER_PASSWORD}" | docker login docker.io -u "${DOCKER_USERNAME}" --password-stdin
       - run:
           name: Publish Release
           command: curl -sL https://git.io/goreleaser | bash
@@ -114,4 +127,6 @@ workflows:
               ignore: /.*/
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
-          context: github-release
+          context:
+            - dockerhub-release
+            - github-release
