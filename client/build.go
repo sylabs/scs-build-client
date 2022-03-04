@@ -11,22 +11,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	jsonresp "github.com/sylabs/json-resp"
 )
 
 // Submit sends a build job to the Build Service. The context controls the lifetime of the request.
 func (c *Client) Submit(ctx context.Context, br BuildRequest) (BuildInfo, error) {
+	ref := &url.URL{
+		Path: "v1/build",
+	}
+
 	b, err := json.Marshal(br)
 	if err != nil {
 		return BuildInfo{}, fmt.Errorf("%w", err)
 	}
 
-	req, err := c.newRequest(http.MethodPost, "/v1/build", bytes.NewReader(b))
+	req, err := c.newRequest(ctx, http.MethodPost, ref, bytes.NewReader(b))
 	if err != nil {
 		return BuildInfo{}, fmt.Errorf("%w", err)
 	}
-	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := c.httpClient.Do(req)
@@ -49,12 +53,16 @@ func (c *Client) Submit(ctx context.Context, br BuildRequest) (BuildInfo, error)
 
 // Cancel cancels an existing build. The context controls the lifetime of the request.
 func (c *Client) Cancel(ctx context.Context, buildID string) error {
-	req, err := c.newRequest(http.MethodPut, fmt.Sprintf("/v1/build/%s/_cancel", buildID), nil)
+	ref := &url.URL{
+		Path: fmt.Sprintf("v1/build/%v/_cancel", buildID),
+	}
+
+	req, err := c.newRequest(ctx, http.MethodPut, ref, nil)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
-	res, err := c.httpClient.Do(req.WithContext(ctx))
+	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}

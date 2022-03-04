@@ -6,6 +6,7 @@
 package client
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -124,21 +125,24 @@ func NewClient(opts ...Option) (*Client, error) {
 	return &c, nil
 }
 
-// newRequest returns a new Request given a method, relative path, query, and optional body.
-func (c *Client) newRequest(method, path string, body io.Reader) (r *http.Request, err error) {
-	u := c.baseURL.ResolveReference(&url.URL{
-		Path: strings.TrimPrefix(path, "/"), // trim leading separator as path is relative.
-	})
+// newRequest returns a new Request given a method, ref, and optional body.
+//
+// The context controls the entire lifetime of a request and its response: obtaining a connection,
+// sending the request, and reading the response headers and body.
+func (c *Client) newRequest(ctx context.Context, method string, ref *url.URL, body io.Reader) (*http.Request, error) {
+	u := c.baseURL.ResolveReference(ref)
 
-	r, err = http.NewRequest(method, u.String(), body)
+	r, err := http.NewRequestWithContext(ctx, method, u.String(), body)
 	if err != nil {
 		return nil, err
 	}
+
 	c.setRequestHeaders(r.Header)
 
 	return r, nil
 }
 
+// setRequestHeaders sets HTTP headers according to c.
 func (c *Client) setRequestHeaders(h http.Header) {
 	if v := c.bearerToken; v != "" {
 		h.Set("Authorization", fmt.Sprintf("BEARER %s", v))

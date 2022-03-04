@@ -9,17 +9,22 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	jsonresp "github.com/sylabs/json-resp"
 )
 
-// GetStatus gets the status of a build from the Build Service by build ID
+// GetStatus gets the status of a build from the Build Service by build ID. The context controls
+// the lifetime of the request.
 func (c *Client) GetStatus(ctx context.Context, buildID string) (BuildInfo, error) {
-	req, err := c.newRequest(http.MethodGet, "/v1/build/"+buildID, nil)
+	ref := &url.URL{
+		Path: "v1/build/" + buildID,
+	}
+
+	req, err := c.newRequest(ctx, http.MethodGet, ref, nil)
 	if err != nil {
 		return BuildInfo{}, fmt.Errorf("%w", err)
 	}
-	req = req.WithContext(ctx)
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {

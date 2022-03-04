@@ -6,8 +6,10 @@
 package client
 
 import (
+	"context"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -88,31 +90,36 @@ func TestNewRequest(t *testing.T) {
 		opts            []Option
 		method          string
 		path            string
+		rawQuery        string
 		body            string
 		wantErr         bool
 		wantURL         string
 		wantBearerToken string
 		wantUserAgent   string
 	}{
-		{"BadMethod", nil, "b@d	", "", "", true, "", "", ""},
-		{"NilConfigGet", nil, http.MethodGet, "/path", "", false, "https://build.sylabs.io/path", "", ""},
-		{"NilConfigPost", nil, http.MethodPost, "/path", "", false, "https://build.sylabs.io/path", "", ""},
-		{"NilConfigPostBody", nil, http.MethodPost, "/path", "body", false, "https://build.sylabs.io/path", "", ""},
-		{"HTTPBaseURL", []Option{
-			OptBaseURL("http://build.staging.sylabs.io"),
-		}, http.MethodGet, "/path", "", false, "http://build.staging.sylabs.io/path", "", ""},
-		{"HTTPSBaseURL", []Option{
+		{"BadMethod", nil, "b@d	", "", "", "", true, "", "", ""},
+		{"Get", nil, http.MethodGet, "/path", "", "", false, "https://build.sylabs.io/path", "", ""},
+		{"Post", nil, http.MethodPost, "/path", "", "", false, "https://build.sylabs.io/path", "", ""},
+		{"PostRawQuery", nil, http.MethodPost, "/path", "a=b", "", false, "https://build.sylabs.io/path?a=b", "", ""},
+		{"PostBody", nil, http.MethodPost, "/path", "", "body", false, "https://build.sylabs.io/path", "", ""},
+		{"BaseURLAbsolute", []Option{
 			OptBaseURL("https://build.staging.sylabs.io"),
-		}, http.MethodGet, "/path", "", false, "https://build.staging.sylabs.io/path", "", ""},
-		{"BaseURLWithPath", []Option{
-			OptBaseURL("https://build.staging.sylabs.io/path"),
-		}, http.MethodGet, "/path", "", false, "https://build.staging.sylabs.io/path/path", "", ""},
+		}, http.MethodGet, "/path", "", "", false, "https://build.staging.sylabs.io/path", "", ""},
+		{"BaseURLRelative", []Option{
+			OptBaseURL("https://build.staging.sylabs.io"),
+		}, http.MethodGet, "path", "", "", false, "https://build.staging.sylabs.io/path", "", ""},
+		{"BaseURLPathAbsolute", []Option{
+			OptBaseURL("https://build.staging.sylabs.io/a/b"),
+		}, http.MethodGet, "/path", "", "", false, "https://build.staging.sylabs.io/path", "", ""},
+		{"BaseURLPathRelative", []Option{
+			OptBaseURL("https://build.staging.sylabs.io/a/b"),
+		}, http.MethodGet, "path", "", "", false, "https://build.staging.sylabs.io/a/b/path", "", ""},
 		{"BearerToken", []Option{
 			OptBearerToken("blah"),
-		}, http.MethodGet, "/path", "", false, "https://build.sylabs.io/path", "BEARER blah", ""},
+		}, http.MethodGet, "/path", "", "", false, "https://build.sylabs.io/path", "BEARER blah", ""},
 		{"UserAgent", []Option{
 			OptUserAgent("Secret Agent Man"),
-		}, http.MethodGet, "/path", "", false, "https://build.sylabs.io/path", "", "Secret Agent Man"},
+		}, http.MethodGet, "/path", "", "", false, "https://build.sylabs.io/path", "", "Secret Agent Man"},
 	}
 
 	for _, tt := range tests {
@@ -122,7 +129,12 @@ func TestNewRequest(t *testing.T) {
 				t.Fatalf("failed to create client: %v", err)
 			}
 
-			r, err := c.newRequest(tt.method, tt.path, strings.NewReader(tt.body))
+			ref := &url.URL{
+				Path:     tt.path,
+				RawQuery: tt.rawQuery,
+			}
+
+			r, err := c.newRequest(context.Background(), tt.method, ref, strings.NewReader(tt.body))
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got err %v, wantErr %v", err, tt.wantErr)
 			}
