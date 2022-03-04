@@ -20,12 +20,12 @@ import (
 // GetOutput streams build output for the provided buildID to w. The context controls the lifetime
 // of the request.
 func (c *Client) GetOutput(ctx context.Context, buildID string, w io.Writer) error {
-	u := c.BaseURL.ResolveReference(&url.URL{
+	u := c.baseURL.ResolveReference(&url.URL{
 		Path: "v1/build-ws/" + buildID,
 	})
 
 	wsScheme := "ws"
-	if c.BaseURL.Scheme == "https" {
+	if c.baseURL.Scheme == "https" {
 		wsScheme = "wss"
 	}
 	u.Scheme = wsScheme
@@ -38,7 +38,7 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, w io.Writer) err
 	// Due to this issue (https://github.com/gorilla/websocket/issues/601), it is not possible
 	// clone the 'c.HTTPClient' transport, so we take only the InsecureSkipVerify and RootCAs
 	// parameters.
-	if tr, ok := c.HTTPClient.Transport.(*http.Transport); ok {
+	if tr, ok := c.httpClient.Transport.(*http.Transport); ok {
 		dialer.TLSClientConfig = &tls.Config{
 			InsecureSkipVerify: tr.TLSClientConfig.InsecureSkipVerify,
 			RootCAs:            tr.TLSClientConfig.RootCAs,

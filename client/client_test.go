@@ -62,19 +62,19 @@ func TestNewClient(t *testing.T) {
 			}
 
 			if err == nil {
-				if got, want := c.BaseURL.String(), tt.wantURL; got != want {
+				if got, want := c.baseURL.String(), tt.wantURL; got != want {
 					t.Errorf("got host %v, want %v", got, want)
 				}
 
-				if got, want := c.AuthToken, tt.wantBearerToken; got != want {
+				if got, want := c.bearerToken, tt.wantBearerToken; got != want {
 					t.Errorf("got auth token %v, want %v", got, want)
 				}
 
-				if got, want := c.UserAgent, tt.wantUserAgent; got != want {
+				if got, want := c.userAgent, tt.wantUserAgent; got != want {
 					t.Errorf("got user agent %v, want %v", got, want)
 				}
 
-				if got, want := c.HTTPClient, tt.wantHTTPClient; got != want {
+				if got, want := c.httpClient, tt.wantHTTPClient; got != want {
 					t.Errorf("got HTTP client %v, want %v", got, want)
 				}
 			}

@@ -82,14 +82,10 @@ func OptHTTPClient(c *http.Client) Option {
 
 // Client describes the client details.
 type Client struct {
-	// Base URL of the service.
-	BaseURL *url.URL
-	// Auth token to include in the Authorization header of each request (if supplied).
-	AuthToken string
-	// User agent to include in each request (if supplied).
-	UserAgent string
-	// HTTPClient to use to make HTTP requests.
-	HTTPClient *http.Client
+	baseURL     *url.URL     // Parsed base URL.
+	bearerToken string       // Bearer token to include in "Authorization" header.
+	userAgent   string       // Value to include in "User-Agent" header.
+	httpClient  *http.Client // Client to use for HTTP requests.
 }
 
 const defaultBaseURL = "https://build.sylabs.io/"
@@ -113,9 +109,9 @@ func NewClient(opts ...Option) (*Client, error) {
 	}
 
 	c := Client{
-		AuthToken:  co.bearerToken,
-		UserAgent:  co.userAgent,
-		HTTPClient: co.httpClient,
+		bearerToken: co.bearerToken,
+		userAgent:   co.userAgent,
+		httpClient:  co.httpClient,
 	}
 
 	// Normalize base URL.
@@ -123,14 +119,14 @@ func NewClient(opts ...Option) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
-	c.BaseURL = u
+	c.baseURL = u
 
 	return &c, nil
 }
 
 // newRequest returns a new Request given a method, relative path, query, and optional body.
 func (c *Client) newRequest(method, path string, body io.Reader) (r *http.Request, err error) {
-	u := c.BaseURL.ResolveReference(&url.URL{
+	u := c.baseURL.ResolveReference(&url.URL{
 		Path: strings.TrimPrefix(path, "/"), // trim leading separator as path is relative.
 	})
 
@@ -144,10 +140,10 @@ func (c *Client) newRequest(method, path string, body io.Reader) (r *http.Reques
 }
 
 func (c *Client) setRequestHeaders(h http.Header) {
-	if v := c.AuthToken; v != "" {
+	if v := c.bearerToken; v != "" {
 		h.Set("Authorization", fmt.Sprintf("BEARER %s", v))
 	}
-	if v := c.UserAgent; v != "" {
+	if v := c.userAgent; v != "" {
 		h.Set("User-Agent", v)
 	}
 }

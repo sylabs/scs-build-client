@@ -21,7 +21,7 @@ func (c *Client) GetStatus(ctx context.Context, buildID string) (BuildInfo, erro
 	}
 	req = req.WithContext(ctx)
 
-	res, err := c.HTTPClient.Do(req)
+	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return BuildInfo{}, fmt.Errorf("%w", err)
 	}

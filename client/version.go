@@ -28,7 +28,7 @@ func (c *Client) GetVersion(ctx context.Context) (VersionInfo, error) {
 		return VersionInfo{}, fmt.Errorf("%w", err)
 	}
 
-	res, err := c.HTTPClient.Do(req.WithContext(ctx))
+	res, err := c.httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return VersionInfo{}, fmt.Errorf("%w", err)
 	}

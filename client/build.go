@@ -29,7 +29,7 @@ func (c *Client) Submit(ctx context.Context, br BuildRequest) (BuildInfo, error)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := c.HTTPClient.Do(req)
+	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return BuildInfo{}, fmt.Errorf("%w", err)
 	}
@@ -54,7 +54,7 @@ func (c *Client) Cancel(ctx context.Context, buildID string) error {
 		return fmt.Errorf("%w", err)
 	}
 
-	res, err := c.HTTPClient.Do(req.WithContext(ctx))
+	res, err := c.httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
