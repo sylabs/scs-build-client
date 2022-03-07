@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2020, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2022, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -10,18 +10,10 @@ import (
 	"net/http"
 	"strings"
 	"testing"
-
-	"github.com/go-log/log"
 )
-
-type mockLogger struct{}
-
-func (*mockLogger) Log(v ...interface{})                 {}
-func (*mockLogger) Logf(format string, v ...interface{}) {}
 
 func TestNewClient(t *testing.T) {
 	httpClient := &http.Client{}
-	logger := &mockLogger{}
 
 	tests := []struct {
 		name           string
@@ -31,39 +23,35 @@ func TestNewClient(t *testing.T) {
 		wantAuthToken  string
 		wantUserAgent  string
 		wantHTTPClient *http.Client
-		wantLogger     log.Logger
 	}{
-		{"NilConfig", nil, false, defaultBaseURL, "", "", http.DefaultClient, log.DefaultLogger},
+		{"NilConfig", nil, false, defaultBaseURL, "", "", http.DefaultClient},
 		{"HTTPBaseURL", &Config{
 			BaseURL: "http://build.staging.sylabs.io",
-		}, false, "http://build.staging.sylabs.io", "", "", http.DefaultClient, log.DefaultLogger},
+		}, false, "http://build.staging.sylabs.io", "", "", http.DefaultClient},
 		{"HTTPSBaseURL", &Config{
 			BaseURL: "https://build.staging.sylabs.io",
-		}, false, "https://build.staging.sylabs.io", "", "", http.DefaultClient, log.DefaultLogger},
+		}, false, "https://build.staging.sylabs.io", "", "", http.DefaultClient},
 		{"HTTPSBaseURLWithPath", &Config{
 			BaseURL: "https://build.staging.sylabs.io/path",
-		}, false, "https://build.staging.sylabs.io/path/", "", "", http.DefaultClient, log.DefaultLogger},
+		}, false, "https://build.staging.sylabs.io/path/", "", "", http.DefaultClient},
 		{"HTTPSBaseURLWithPathSlash", &Config{
 			BaseURL: "https://build.staging.sylabs.io/path/",
-		}, false, "https://build.staging.sylabs.io/path/", "", "", http.DefaultClient, log.DefaultLogger},
+		}, false, "https://build.staging.sylabs.io/path/", "", "", http.DefaultClient},
 		{"UnsupportedBaseURL", &Config{
 			BaseURL: "bad:",
-		}, true, "", "", "", nil, log.DefaultLogger},
+		}, true, "", "", "", nil},
 		{"BadBaseURL", &Config{
 			BaseURL: ":",
-		}, true, "", "", "", nil, log.DefaultLogger},
+		}, true, "", "", "", nil},
 		{"AuthToken", &Config{
 			AuthToken: "blah",
-		}, false, defaultBaseURL, "blah", "", http.DefaultClient, log.DefaultLogger},
+		}, false, defaultBaseURL, "blah", "", http.DefaultClient},
 		{"UserAgent", &Config{
 			UserAgent: "Secret Agent Man",
-		}, false, defaultBaseURL, "", "Secret Agent Man", http.DefaultClient, log.DefaultLogger},
+		}, false, defaultBaseURL, "", "Secret Agent Man", http.DefaultClient},
 		{"HTTPClient", &Config{
 			HTTPClient: httpClient,
-		}, false, defaultBaseURL, "", "", httpClient, log.DefaultLogger},
-		{"Logger", &Config{
-			Logger: logger,
-		}, false, defaultBaseURL, "", "", http.DefaultClient, logger},
+		}, false, defaultBaseURL, "", "", httpClient},
 	}
 
 	for _, tt := range tests {

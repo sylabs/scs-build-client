@@ -1,4 +1,4 @@
-// Copyright (c) 2019, Sylabs Inc. All rights reserved.
+// Copyright (c) 2019-2022, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the LICENSE.md file
 // distributed with the sources of this project regarding your rights to use or distribute this
 // software.
@@ -11,8 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/go-log/log"
 )
 
 // Config contains the client configuration.
@@ -25,8 +23,6 @@ type Config struct {
 	UserAgent string
 	// HTTPClient to use to make HTTP requests (if supplied).
 	HTTPClient *http.Client
-	// Logger to be used when output is generated
-	Logger log.Logger
 }
 
 // DefaultConfig is a configuration that uses default values.
@@ -42,8 +38,6 @@ type Client struct {
 	UserAgent string
 	// HTTPClient to use to make HTTP requests.
 	HTTPClient *http.Client
-	// Logger to be used when output is generated
-	Logger log.Logger
 }
 
 const defaultBaseURL = "https://build.sylabs.io"
@@ -87,11 +81,6 @@ func New(cfg *Config) (c *Client, err error) {
 		c.HTTPClient = http.DefaultClient
 	}
 
-	if cfg.Logger != nil {
-		c.Logger = cfg.Logger
-	} else {
-		c.Logger = log.DefaultLogger
-	}
 	return c, nil
 }
 
