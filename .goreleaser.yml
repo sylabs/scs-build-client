@@ -4,6 +4,9 @@ release:
 changelog:
   use: github-native
 
+env:
+  - DOCKER_CLI_EXPERIMENTAL=enabled
+
 gomod:
   proxy: true
   env:
@@ -72,9 +75,38 @@ archives:
 
 dockers:
   - image_templates:
-      - sylabsio/scs-build:latest
-      - sylabsio/scs-build:{{ .Major }}-amd64
-      - sylabsio/scs-build:{{ .Major }}.{{ .Minor }}-amd64
-      - sylabsio/scs-build:{{ .Major }}.{{ .Minor }}.{{ .Patch }}-amd64
+      - sylabsio/scs-build:{{ .Version }}-amd64
     skip_push: auto
     dockerfile: ./build/docker/scs-build/Dockerfile
+    use: buildx
+    goarch: amd64
+    build_flag_templates:
+      - "--platform=linux/amd64"
+
+  - image_templates:
+      - sylabsio/scs-build:{{ .Version }}-arm64v8
+    skip_push: auto
+    dockerfile: ./build/docker/scs-build/Dockerfile
+    use: buildx
+    goarch: arm64
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+
+docker_manifests:
+  - name_template: sylabsio/scs-build:latest
+    image_templates: &manifest-images
+      - sylabsio/scs-build:{{ .Version }}-amd64
+      - sylabsio/scs-build:{{ .Version }}-arm64v8
+    skip_push: auto
+
+  - name_template: sylabsio/scs-build:{{ .Major }}
+    image_templates: *manifest-images
+    skip_push: auto
+
+  - name_template: sylabsio/scs-build:{{ .Major }}.{{ .Minor }}
+    image_templates: *manifest-images
+    skip_push: auto
+
+  - name_template: sylabsio/scs-build:{{ .Major }}.{{ .Minor }}.{{ .Patch }}
+    image_templates: *manifest-images
+    skip_push: auto
