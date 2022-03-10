@@ -82,9 +82,7 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, w io.Writer) err
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		if err := c.Cancel(ctx, buildID); err != nil { //nolint
-			c.Logger.Logf("build cancellation request failed: %v", err)
-		}
+		_ = c.Cancel(ctx, buildID) //nolint:contextcheck
 
 		ws.Close()
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2022, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -29,7 +29,6 @@ func (c *Client) Submit(ctx context.Context, br BuildRequest) (bi BuildInfo, err
 	}
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
-	c.Logger.Logf("Sending build request to %s", req.URL.String())
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -38,10 +37,7 @@ func (c *Client) Submit(ctx context.Context, br BuildRequest) (bi BuildInfo, err
 	defer res.Body.Close()
 
 	err = jsonresp.ReadResponse(res.Body, &bi)
-	if err == nil {
-		c.Logger.Logf("Build response - id: %s, libref: %s", bi.ID, bi.LibraryRef)
-	}
-	return
+	return bi, err
 }
 
 // Cancel cancels an existing build. The context controls the lifetime of the
@@ -51,7 +47,6 @@ func (c *Client) Cancel(ctx context.Context, buildID string) error {
 	if err != nil {
 		return err
 	}
-	c.Logger.Logf("Sending build cancellation request to %s", req.URL.String())
 
 	res, err := c.HTTPClient.Do(req.WithContext(ctx))
 	if err != nil {

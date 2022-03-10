@@ -82,6 +82,9 @@ jobs:
           name: Install Docker
           command: curl -sL https://get.docker.com | bash
       - run:
+          name: Install Cross-Platform Emulators
+          command: docker run --privileged --rm tonistiigi/binfmt --install all
+      - run:
           name: Test Release
           command: curl -sL https://git.io/goreleaser | bash -s -- --snapshot --skip-publish
 
@@ -90,10 +93,13 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: &docker-version 20.10.11
+          version: *docker-version
       - run:
           name: Install Docker
           command: curl -sL https://get.docker.com | bash
+      - run:
+          name: Install Cross-Platform Emulators
+          command: docker run --privileged --rm tonistiigi/binfmt --install all
       - run:
           name: Authenticate with DockerHub
           command: echo "${DOCKER_PASSWORD}" | docker login docker.io -u "${DOCKER_USERNAME}" --password-stdin
