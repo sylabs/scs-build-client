@@ -63,6 +63,20 @@ export SYLABS_AUTH_TOKEN=xxx
 docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" scs-build:latest build docker://alpine
 ```
 
+#### Build and download artifact using Docker image
+
+This example uses volume binding to permit `scs-build` to write the build
+artifact to the current directory of the Docker host.
+
+```sh
+export SYLABS_AUTH_TOKEN=xxx
+docker run -u $(id -u) -v `pwd`:/work --rm \
+    -e SYLABS_AUTH_TOKEN=${SYLABS_AUTH_TOKEN} \
+    sylabsio/scs-build build \
+    docker://alpine:3 \
+    /work/alpine_3.sif
+```
+
 ### CI/CD Integration
 
 #### GitHub Actions
