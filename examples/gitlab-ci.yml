@@ -10,7 +10,7 @@ build-code-job:
   stage: build
 
   image:
-    name: "scs-build:latest"
+    name: "sylabsio/scs-build"
 
   variables:
     SKIP_VERIFY: "true"
@@ -18,7 +18,7 @@ build-code-job:
   script:
     # This example uses cloud.sylabs.io as default builder. Use "--url URL" to specify
     # local Singularity Enterprise environment.
-    - /usr/local/bin/scs-build build alpine.def artifact.sif
+    - build alpine.def artifact.sif
 
   artifacts:
     paths:
