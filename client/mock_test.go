@@ -3,7 +3,7 @@
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
 
-package client_test
+package client
 
 import (
 	"context"
@@ -18,7 +18,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	jsonresp "github.com/sylabs/json-resp"
-	"github.com/sylabs/scs-build-client/client"
 )
 
 type mockService struct {
@@ -48,7 +47,7 @@ const (
 	buildCancelSuffix = "/_cancel"
 )
 
-func newResponse(m *mockService, id string, def []byte, libraryRef string) client.BuildInfo {
+func newResponse(m *mockService, id string, def []byte, libraryRef string) BuildInfo {
 	libraryURL := url.URL{
 		Scheme: "http",
 		Host:   m.httpAddr,
@@ -57,7 +56,7 @@ func newResponse(m *mockService, id string, def []byte, libraryRef string) clien
 		libraryRef = "library://user/collection/image"
 	}
 
-	return client.BuildInfo{
+	return BuildInfo{
 		ID:            id,
 		DefinitionRaw: def,
 		LibraryURL:    libraryURL.String(),
@@ -71,7 +70,7 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Set the response body, depending on the type of operation
 	if r.Method == http.MethodPost && r.RequestURI == buildPath {
 		// Mock new build endpoint
-		var br client.BuildRequest
+		var br BuildRequest
 		if err := json.NewDecoder(r.Body).Decode(&br); err != nil {
 			m.t.Fatalf("failed to parse request: %v", err)
 		}
@@ -203,7 +202,7 @@ func TestBuild(t *testing.T) {
 	// Loop over test cases
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			c, err := client.New(&client.Config{
+			c, err := New(&Config{
 				BaseURL:   url.String(),
 				AuthToken: authToken,
 			})
@@ -219,7 +218,7 @@ func TestBuild(t *testing.T) {
 			m.imageResponseCode = tt.imageResponseCode
 
 			// Do it!
-			bd, err := c.Submit(tt.ctx, client.BuildRequest{
+			bd, err := c.Submit(tt.ctx, BuildRequest{
 				DefinitionRaw: []byte{},
 				LibraryRef:    tt.imagePath,
 				LibraryURL:    url.String(),

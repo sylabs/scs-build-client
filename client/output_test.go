@@ -3,7 +3,7 @@
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
 
-package client_test
+package client
 
 import (
 	"context"
@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/sylabs/scs-build-client/client"
 )
 
 type testOutputWriter struct {
@@ -74,7 +73,7 @@ func TestOutput(t *testing.T) {
 				t.Fatalf("failed to parse URL: %v", err)
 			}
 
-			c, err := client.New(&client.Config{
+			c, err := New(&Config{
 				BaseURL:   url.String(),
 				AuthToken: authToken,
 			})
