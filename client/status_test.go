@@ -3,7 +3,7 @@
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
 
-package client_test
+package client
 
 import (
 	"context"
@@ -12,8 +12,6 @@ import (
 	"net/url"
 	"testing"
 	"time"
-
-	"github.com/sylabs/scs-build-client/client"
 )
 
 func TestStatus(t *testing.T) {
@@ -43,7 +41,7 @@ func TestStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse URL: %v", err)
 	}
-	c, err := client.New(&client.Config{
+	c, err := New(&Config{
 		BaseURL: url.String(),
 	})
 	if err != nil {

@@ -3,7 +3,7 @@
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
 
-package client_test
+package client
 
 import (
 	"context"
@@ -12,8 +12,6 @@ import (
 	"net/url"
 	"testing"
 	"time"
-
-	"github.com/sylabs/scs-build-client/client"
 )
 
 func TestSubmit(t *testing.T) {
@@ -45,7 +43,7 @@ func TestSubmit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse URL: %v", err)
 	}
-	c, err := client.New(&client.Config{
+	c, err := New(&Config{
 		BaseURL: url.String(),
 	})
 	if err != nil {
@@ -58,7 +56,7 @@ func TestSubmit(t *testing.T) {
 			m.buildResponseCode = tt.responseCode
 
 			// Call the handler
-			bi, err := c.Submit(tt.ctx, client.BuildRequest{
+			bi, err := c.Submit(tt.ctx, BuildRequest{
 				DefinitionRaw: []byte{},
 				LibraryRef:    tt.libraryRef,
 				LibraryURL:    "",
@@ -99,7 +97,7 @@ func TestCancel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse URL: %v", err)
 	}
-	c, err := client.New(&client.Config{
+	c, err := New(&Config{
 		BaseURL: url.String(),
 	})
 	if err != nil {
