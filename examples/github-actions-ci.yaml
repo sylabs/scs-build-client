@@ -9,7 +9,7 @@ on:
     branches:
       - "main"
 env:
-  DOCKER_BUILD_CLIENT: "<DOCKERHUB_IMAGE>" # REPLACE with DockerHub or other hosted build-client docker image
+  DOCKER_BUILD_CLIENT: "sylabsio/scs-build"
   DEF_FILE: "alpine.def" # REPLACE with Def file in a repo.
   OUTPUT_SIF: "alpine.sif" # REPLACE with SIF name
   LIBRARY_PATH: "library:<PROJECT>/<REPO>/<IMG>:<TAG>" # REPLACE with library path to store sif.
@@ -32,8 +32,8 @@ jobs:
         run: |
           docker run -v ${{ github.workspace }}:/app \
           -u $(id -u ${USER}):$(id -g ${USER}) \
-          $DOCKER_BUILD_CLIENT \
-          scs-build build --skip-verify /app/$DEF_FILE "/app/$OUTPUT_SIF"
+          $DOCKER_BUILD_CLIENT build \
+          --skip-verify /app/$DEF_FILE "/app/$OUTPUT_SIF"
 
       - name: Move Sif
         run: mv ${{ github.workspace }}/$OUTPUT_SIF ${{ github.workspace }}/tmp-sif-path/$OUTPUT_SIF
