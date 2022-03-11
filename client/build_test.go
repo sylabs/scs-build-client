@@ -10,6 +10,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -49,11 +50,9 @@ func TestSubmit(t *testing.T) {
 			m.buildResponseCode = tt.responseCode
 
 			// Call the handler
-			bi, err := c.Submit(tt.ctx, BuildRequest{
-				DefinitionRaw: []byte{},
-				LibraryRef:    tt.libraryRef,
-				LibraryURL:    "",
-			})
+			bi, err := c.Submit(tt.ctx, strings.NewReader(""),
+				OptBuildLibraryRef(tt.libraryRef),
+			)
 
 			if got, want := err, tt.wantErr; !errors.Is(got, want) {
 				t.Fatalf("got error %v, want %v", got, want)

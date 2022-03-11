@@ -6,6 +6,7 @@
 package buildclient
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -14,14 +15,10 @@ import (
 )
 
 func (app *App) buildArtifact(ctx context.Context, def []byte, arch string, libraryRef string) (*build.BuildInfo, error) {
-	bi, err := app.buildClient.Submit(ctx, build.BuildRequest{
-		LibraryRef:    libraryRef,
-		LibraryURL:    app.libraryClient.BaseURL.String(),
-		DefinitionRaw: def,
-		BuilderRequirements: map[string]string{
-			"arch": arch,
-		},
-	})
+	bi, err := app.buildClient.Submit(ctx, bytes.NewReader(def),
+		build.OptBuildLibraryRef(libraryRef),
+		build.OptBuildArchitecture(arch),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error submitting remote build: %w", err)
 	}

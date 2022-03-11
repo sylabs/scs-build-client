@@ -70,7 +70,10 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Set the response body, depending on the type of operation
 	if r.Method == http.MethodPost && r.RequestURI == buildPath {
 		// Mock new build endpoint
-		var br BuildRequest
+		var br struct {
+			LibraryRef    string `json:"libraryRef"`
+			DefinitionRaw []byte `json:"definitionRaw"`
+		}
 		if err := json.NewDecoder(r.Body).Decode(&br); err != nil {
 			m.t.Fatalf("failed to parse request: %v", err)
 		}
@@ -213,11 +216,9 @@ func TestBuild(t *testing.T) {
 			m.imageResponseCode = tt.imageResponseCode
 
 			// Do it!
-			bd, err := c.Submit(tt.ctx, BuildRequest{
-				DefinitionRaw: []byte{},
-				LibraryRef:    tt.imagePath,
-				LibraryURL:    s.URL,
-			})
+			bd, err := c.Submit(tt.ctx, strings.NewReader(""),
+				OptBuildLibraryRef(tt.imagePath),
+			)
 			if !tt.expectSubmitSuccess {
 				// Ensure the handler returned an error
 				if err == nil {
