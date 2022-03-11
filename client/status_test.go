@@ -57,13 +57,13 @@ func TestStatus(t *testing.T) {
 			}
 
 			if err == nil {
-				if bi.ID != id {
-					t.Errorf("mismatched ID: %v/%v", bi.ID, id)
+				if bi.ID() != id {
+					t.Errorf("mismatched ID: %v/%v", bi.ID(), id)
 				}
-				if bi.LibraryRef == "" {
+				if bi.LibraryRef() == "" {
 					t.Errorf("empty Library ref")
 				}
-				if bi.LibraryURL == "" {
+				if bi.LibraryURL() == "" {
 					t.Errorf("empty Library URL")
 				}
 			}

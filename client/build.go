@@ -18,6 +18,28 @@ import (
 	jsonresp "github.com/sylabs/json-resp"
 )
 
+// rawBuildInfo contains the details of an individual build.
+type rawBuildInfo struct {
+	ID            string `json:"id"`
+	IsComplete    bool   `json:"isComplete"`
+	ImageSize     int64  `json:"imageSize,omitempty"`
+	ImageChecksum string `json:"imageChecksum,omitempty"`
+	LibraryRef    string `json:"libraryRef"`
+	LibraryURL    string `json:"libraryURL"`
+}
+
+// BuildInfo contains the details of an individual build.
+type BuildInfo struct {
+	raw rawBuildInfo
+}
+
+func (bi *BuildInfo) ID() string            { return bi.raw.ID }
+func (bi *BuildInfo) IsComplete() bool      { return bi.raw.IsComplete }
+func (bi *BuildInfo) ImageSize() int64      { return bi.raw.ImageSize }
+func (bi *BuildInfo) ImageChecksum() string { return bi.raw.ImageChecksum }
+func (bi *BuildInfo) LibraryRef() string    { return bi.raw.LibraryRef }
+func (bi *BuildInfo) LibraryURL() string    { return bi.raw.LibraryURL }
+
 type buildOptions struct {
 	libraryRef string
 	arch       string
@@ -63,20 +85,20 @@ func OptBuildLibraryPullBaseURL(libraryURL string) BuildOption {
 // By default, if definition involves pulling one or more images from a Library reference that does
 // not contain a hostname, they will be pulled from the Library associated with the Remote Builder.
 // To override this behaviour, consider using OptBuildLibraryPullBaseURL.
-func (c *Client) Submit(ctx context.Context, definition io.Reader, opts ...BuildOption) (BuildInfo, error) {
+func (c *Client) Submit(ctx context.Context, definition io.Reader, opts ...BuildOption) (*BuildInfo, error) {
 	bo := buildOptions{
 		arch: runtime.GOARCH,
 	}
 
 	for _, opt := range opts {
 		if err := opt(&bo); err != nil {
-			return BuildInfo{}, fmt.Errorf("%w", err)
+			return nil, fmt.Errorf("%w", err)
 		}
 	}
 
 	raw, err := io.ReadAll(definition)
 	if err != nil {
-		return BuildInfo{}, fmt.Errorf("%w", err)
+		return nil, fmt.Errorf("%w", err)
 	}
 
 	v := struct {
@@ -98,7 +120,7 @@ func (c *Client) Submit(ctx context.Context, definition io.Reader, opts ...Build
 
 	b, err := json.Marshal(v)
 	if err != nil {
-		return BuildInfo{}, fmt.Errorf("%w", err)
+		return nil, fmt.Errorf("%w", err)
 	}
 
 	ref := &url.URL{
@@ -107,26 +129,26 @@ func (c *Client) Submit(ctx context.Context, definition io.Reader, opts ...Build
 
 	req, err := c.newRequest(ctx, http.MethodPost, ref, bytes.NewReader(b))
 	if err != nil {
-		return BuildInfo{}, fmt.Errorf("%w", err)
+		return nil, fmt.Errorf("%w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return BuildInfo{}, fmt.Errorf("%w", err)
+		return nil, fmt.Errorf("%w", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 { // non-2xx status code
-		return BuildInfo{}, fmt.Errorf("%w", errorFromResponse(res))
+		return nil, fmt.Errorf("%w", errorFromResponse(res))
 	}
 
-	var bi BuildInfo
-	if err = jsonresp.ReadResponse(res.Body, &bi); err != nil {
-		return BuildInfo{}, fmt.Errorf("%w", err)
+	var rbi rawBuildInfo
+	if err = jsonresp.ReadResponse(res.Body, &rbi); err != nil {
+		return nil, fmt.Errorf("%w", err)
 	}
 
-	return bi, nil
+	return &BuildInfo{rbi}, nil
 }
 
 // Cancel cancels an existing build. The context controls the lifetime of the request.

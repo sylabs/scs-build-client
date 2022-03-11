@@ -47,7 +47,7 @@ const (
 	buildCancelSuffix = "/_cancel"
 )
 
-func newResponse(m *mockService, id string, def []byte, libraryRef string) BuildInfo {
+func newResponse(m *mockService, id string, libraryRef string) rawBuildInfo {
 	libraryURL := url.URL{
 		Scheme: "http",
 		Host:   m.httpAddr,
@@ -56,13 +56,12 @@ func newResponse(m *mockService, id string, def []byte, libraryRef string) Build
 		libraryRef = "library://user/collection/image"
 	}
 
-	return BuildInfo{
-		ID:            id,
-		DefinitionRaw: def,
-		LibraryURL:    libraryURL.String(),
-		LibraryRef:    libraryRef,
-		IsComplete:    true,
-		ImageSize:     1,
+	return rawBuildInfo{
+		ID:         id,
+		LibraryURL: libraryURL.String(),
+		LibraryRef: libraryRef,
+		IsComplete: true,
+		ImageSize:  1,
 	}
 }
 
@@ -71,15 +70,14 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost && r.RequestURI == buildPath {
 		// Mock new build endpoint
 		var br struct {
-			LibraryRef    string `json:"libraryRef"`
-			DefinitionRaw []byte `json:"definitionRaw"`
+			LibraryRef string `json:"libraryRef"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&br); err != nil {
 			m.t.Fatalf("failed to parse request: %v", err)
 		}
 		if m.buildResponseCode == http.StatusCreated {
 			id := newObjectID()
-			if err := jsonresp.WriteResponse(w, newResponse(m, id, br.DefinitionRaw, br.LibraryRef), m.buildResponseCode); err != nil {
+			if err := jsonresp.WriteResponse(w, newResponse(m, id, br.LibraryRef), m.buildResponseCode); err != nil {
 				m.t.Fatal(err)
 			}
 		} else {
@@ -94,7 +92,7 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			m.t.Fatalf("failed to parse ID '%v'", id)
 		}
 		if m.statusResponseCode == http.StatusOK {
-			if err := jsonresp.WriteResponse(w, newResponse(m, id, []byte{}, ""), m.statusResponseCode); err != nil {
+			if err := jsonresp.WriteResponse(w, newResponse(m, id, ""), m.statusResponseCode); err != nil {
 				m.t.Fatal(err)
 			}
 		} else {
@@ -235,7 +233,7 @@ func TestBuild(t *testing.T) {
 				fully: true,
 				err:   nil,
 			}
-			err = c.GetOutput(tt.ctx, bd.ID, tor)
+			err = c.GetOutput(tt.ctx, bd.ID(), tor)
 			if tt.expectStreamSuccess {
 				// Ensure the handler returned no error, and the response is as expected
 				if err != nil {
@@ -248,7 +246,7 @@ func TestBuild(t *testing.T) {
 				}
 			}
 
-			bd, err = c.GetStatus(tt.ctx, bd.ID)
+			_, err = c.GetStatus(tt.ctx, bd.ID())
 			if tt.expectStatusSuccess {
 				// Ensure the handler returned no error, and the response is as expected
 				if err != nil {

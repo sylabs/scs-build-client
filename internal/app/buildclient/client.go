@@ -211,7 +211,7 @@ func (app *App) Run(ctx context.Context, arch string) error {
 
 	if artifactFileName == "" {
 		if libraryRef == "" {
-			fmt.Printf("Build artifact %v is available for 24 hours or less\n", bi.LibraryRef)
+			fmt.Printf("Build artifact %v is available for 24 hours or less\n", bi.LibraryRef())
 		}
 		return nil
 	}

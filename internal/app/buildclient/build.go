@@ -22,11 +22,11 @@ func (app *App) buildArtifact(ctx context.Context, def []byte, arch string, libr
 	if err != nil {
 		return nil, fmt.Errorf("error submitting remote build: %w", err)
 	}
-	if err := app.buildClient.GetOutput(ctx, bi.ID, os.Stdout); err != nil {
+	if err := app.buildClient.GetOutput(ctx, bi.ID(), os.Stdout); err != nil {
 		return nil, fmt.Errorf("error streaming remote build output: %w", err)
 	}
-	if bi, err = app.buildClient.GetStatus(ctx, bi.ID); err != nil {
+	if bi, err = app.buildClient.GetStatus(ctx, bi.ID()); err != nil {
 		return nil, fmt.Errorf("error getting remote build status: %w", err)
 	}
-	return &bi, nil
+	return bi, nil
 }

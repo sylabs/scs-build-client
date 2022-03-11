@@ -59,13 +59,13 @@ func TestSubmit(t *testing.T) {
 			}
 
 			if err == nil {
-				if bi.ID == "" {
+				if bi.ID() == "" {
 					t.Fatalf("invalid ID")
 				}
-				if bi.LibraryRef == "" {
+				if bi.LibraryRef() == "" {
 					t.Errorf("empty Library ref")
 				}
-				if bi.LibraryURL == "" {
+				if bi.LibraryURL() == "" {
 					t.Errorf("empty Library URL")
 				}
 			}
