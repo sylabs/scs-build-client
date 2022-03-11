@@ -3,17 +3,16 @@
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
 
-package client_test
+package client
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
-
-	"github.com/sylabs/scs-build-client/client"
 )
 
 func TestStatus(t *testing.T) {
@@ -23,14 +22,14 @@ func TestStatus(t *testing.T) {
 
 	// Table of tests to run
 	tests := []struct {
-		description   string
-		expectSuccess bool
-		responseCode  int
-		ctx           context.Context //nolint:containedctx
+		description  string
+		wantErr      error
+		responseCode int
+		ctx          context.Context //nolint:containedctx
 	}{
-		{"Success", true, http.StatusOK, context.Background()},
-		{"NotFound", false, http.StatusNotFound, context.Background()},
-		{"ContextExpired", false, http.StatusOK, ctx},
+		{"Success", nil, http.StatusOK, context.Background()},
+		{"NotFound", &httpError{Code: http.StatusNotFound}, http.StatusNotFound, context.Background()},
+		{"ContextExpired", context.DeadlineExceeded, http.StatusOK, ctx},
 	}
 
 	// Start a mock server
@@ -43,7 +42,7 @@ func TestStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to parse URL: %v", err)
 	}
-	c, err := client.New(&client.Config{
+	c, err := New(&Config{
 		BaseURL: url.String(),
 	})
 	if err != nil {
@@ -61,11 +60,11 @@ func TestStatus(t *testing.T) {
 			// Call the handler
 			bi, err := c.GetStatus(tt.ctx, id)
 
-			if tt.expectSuccess {
-				// Ensure the handler returned no error, and the response is as expected
-				if err != nil {
-					t.Fatalf("unexpected failure: %v", err)
-				}
+			if got, want := err, tt.wantErr; !errors.Is(got, want) {
+				t.Fatalf("got error %v, want %v", got, want)
+			}
+
+			if err == nil {
 				if bi.ID != id {
 					t.Errorf("mismatched ID: %v/%v", bi.ID, id)
 				}
@@ -74,11 +73,6 @@ func TestStatus(t *testing.T) {
 				}
 				if bi.LibraryURL == "" {
 					t.Errorf("empty Library URL")
-				}
-			} else {
-				// Ensure the handler returned an error
-				if err == nil {
-					t.Fatalf("unexpected success")
 				}
 			}
 		})
