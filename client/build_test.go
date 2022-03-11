@@ -7,6 +7,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -21,16 +22,16 @@ func TestSubmit(t *testing.T) {
 
 	// Table of tests to run
 	tests := []struct {
-		description   string
-		expectSuccess bool
-		libraryRef    string
-		responseCode  int
-		ctx           context.Context //nolint:containedctx
+		description  string
+		wantErr      error
+		libraryRef   string
+		responseCode int
+		ctx          context.Context //nolint:containedctx
 	}{
-		{"SuccessAttached", true, "", http.StatusCreated, context.Background()},
-		{"SuccessLibraryRef", true, "library://user/collection/image", http.StatusCreated, context.Background()},
-		{"NotFoundAttached", false, "", http.StatusNotFound, context.Background()},
-		{"ContextExpiredAttached", false, "", http.StatusCreated, ctx},
+		{"SuccessAttached", nil, "", http.StatusCreated, context.Background()},
+		{"SuccessLibraryRef", nil, "library://user/collection/image", http.StatusCreated, context.Background()},
+		{"NotFoundAttached", &httpError{Code: http.StatusNotFound}, "", http.StatusNotFound, context.Background()},
+		{"ContextExpiredAttached", context.DeadlineExceeded, "", http.StatusCreated, ctx},
 	}
 
 	// Start a mock server
@@ -62,11 +63,11 @@ func TestSubmit(t *testing.T) {
 				LibraryURL:    "",
 			})
 
-			if tt.expectSuccess {
-				// Ensure the handler returned no error, and the response is as expected
-				if err != nil {
-					t.Fatalf("unexpected failure: %v", err)
-				}
+			if got, want := err, tt.wantErr; !errors.Is(got, want) {
+				t.Fatalf("got error %v, want %v", got, want)
+			}
+
+			if err == nil {
 				if bi.ID == "" {
 					t.Fatalf("invalid ID")
 				}
@@ -75,11 +76,6 @@ func TestSubmit(t *testing.T) {
 				}
 				if bi.LibraryURL == "" {
 					t.Errorf("empty Library URL")
-				}
-			} else {
-				// Ensure the handler returned an error
-				if err == nil {
-					t.Fatalf("unexpected success")
 				}
 			}
 		})
