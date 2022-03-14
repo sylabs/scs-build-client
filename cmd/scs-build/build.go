@@ -98,6 +98,7 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		LibraryRef:    libraryRef,
 		SkipTLSVerify: v.GetBool(keySkipTLSVerify),
 		Force:         v.GetBool(keyForceOverwrite),
+		UserAgent:     fmt.Sprintf("scs-build/%v", version),
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Application init error: %v\n", err)
