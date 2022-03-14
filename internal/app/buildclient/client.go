@@ -29,6 +29,7 @@ type Config struct {
 	SkipTLSVerify bool
 	LibraryRef    string
 	Force         bool
+	UserAgent     string
 }
 
 // App represents the application instance
@@ -77,7 +78,7 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 	}
 
 	// Initialize build & library clients
-	if app.buildClient, app.libraryClient, err = getClients(ctx, cfg.SkipTLSVerify, feURL, cfg.AuthToken); err != nil {
+	if app.buildClient, app.libraryClient, err = getClients(ctx, cfg.SkipTLSVerify, feURL, cfg.AuthToken, cfg.UserAgent); err != nil {
 		return nil, fmt.Errorf("error initializing client(s): %w", err)
 	}
 	return app, nil
@@ -118,7 +119,7 @@ func getFrontendURL(r *library.Ref, urlOverride string) (string, error) {
 }
 
 // getClients returns initialized clients for remote build and cloud library
-func getClients(ctx context.Context, skipVerify bool, endpoint, authToken string) (*build.Client, *library.Client, error) {
+func getClients(ctx context.Context, skipVerify bool, endpoint, authToken, userAgent string) (*build.Client, *library.Client, error) {
 	feCfg, err := endpoints.GetFrontendConfig(ctx, skipVerify, endpoint)
 	if err != nil {
 		return nil, nil, err
@@ -132,6 +133,7 @@ func getClients(ctx context.Context, skipVerify bool, endpoint, authToken string
 		BaseURL:    feCfg.BuildAPI.URI,
 		AuthToken:  authToken,
 		HTTPClient: &http.Client{Transport: tr},
+		UserAgent:  userAgent,
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("error initializing build client: %w", err)
@@ -141,6 +143,7 @@ func getClients(ctx context.Context, skipVerify bool, endpoint, authToken string
 		BaseURL:    feCfg.LibraryAPI.URI,
 		AuthToken:  authToken,
 		HTTPClient: &http.Client{Transport: tr},
+		UserAgent:  userAgent,
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("error initializing library client: %w", err)
