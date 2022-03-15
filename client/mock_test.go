@@ -47,7 +47,7 @@ const (
 	buildCancelSuffix = "/_cancel"
 )
 
-func newResponse(m *mockService, id string, def []byte, libraryRef string) BuildInfo {
+func newResponse(m *mockService, id string, libraryRef string) rawBuildInfo {
 	libraryURL := url.URL{
 		Scheme: "http",
 		Host:   m.httpAddr,
@@ -56,13 +56,12 @@ func newResponse(m *mockService, id string, def []byte, libraryRef string) Build
 		libraryRef = "library://user/collection/image"
 	}
 
-	return BuildInfo{
-		ID:            id,
-		DefinitionRaw: def,
-		LibraryURL:    libraryURL.String(),
-		LibraryRef:    libraryRef,
-		IsComplete:    true,
-		ImageSize:     1,
+	return rawBuildInfo{
+		ID:         id,
+		LibraryURL: libraryURL.String(),
+		LibraryRef: libraryRef,
+		IsComplete: true,
+		ImageSize:  1,
 	}
 }
 
@@ -70,13 +69,15 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Set the response body, depending on the type of operation
 	if r.Method == http.MethodPost && r.RequestURI == buildPath {
 		// Mock new build endpoint
-		var br BuildRequest
+		var br struct {
+			LibraryRef string `json:"libraryRef"`
+		}
 		if err := json.NewDecoder(r.Body).Decode(&br); err != nil {
 			m.t.Fatalf("failed to parse request: %v", err)
 		}
 		if m.buildResponseCode == http.StatusCreated {
 			id := newObjectID()
-			if err := jsonresp.WriteResponse(w, newResponse(m, id, br.DefinitionRaw, br.LibraryRef), m.buildResponseCode); err != nil {
+			if err := jsonresp.WriteResponse(w, newResponse(m, id, br.LibraryRef), m.buildResponseCode); err != nil {
 				m.t.Fatal(err)
 			}
 		} else {
@@ -91,7 +92,7 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			m.t.Fatalf("failed to parse ID '%v'", id)
 		}
 		if m.statusResponseCode == http.StatusOK {
-			if err := jsonresp.WriteResponse(w, newResponse(m, id, []byte{}, ""), m.statusResponseCode); err != nil {
+			if err := jsonresp.WriteResponse(w, newResponse(m, id, ""), m.statusResponseCode); err != nil {
 				m.t.Fatal(err)
 			}
 		} else {
@@ -168,11 +169,6 @@ func TestBuild(t *testing.T) {
 	// Mock server address is fixed for all tests
 	m.httpAddr = s.Listener.Addr().String()
 
-	url, err := url.Parse(s.URL)
-	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
-	}
-
 	// Table of tests to run
 	// nolint:maligned
 	tests := []struct {
@@ -202,12 +198,12 @@ func TestBuild(t *testing.T) {
 	// Loop over test cases
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			c, err := New(&Config{
-				BaseURL:   url.String(),
-				AuthToken: authToken,
-			})
+			c, err := NewClient(
+				OptBaseURL(s.URL),
+				OptBearerToken(authToken),
+			)
 			if err != nil {
-				t.Fatalf("failed to get new builder: %v", err)
+				t.Fatal(err)
 			}
 
 			// Set the response codes for each stage of the build
@@ -218,11 +214,9 @@ func TestBuild(t *testing.T) {
 			m.imageResponseCode = tt.imageResponseCode
 
 			// Do it!
-			bd, err := c.Submit(tt.ctx, BuildRequest{
-				DefinitionRaw: []byte{},
-				LibraryRef:    tt.imagePath,
-				LibraryURL:    url.String(),
-			})
+			bd, err := c.Submit(tt.ctx, strings.NewReader(""),
+				OptBuildLibraryRef(tt.imagePath),
+			)
 			if !tt.expectSubmitSuccess {
 				// Ensure the handler returned an error
 				if err == nil {
@@ -239,7 +233,7 @@ func TestBuild(t *testing.T) {
 				fully: true,
 				err:   nil,
 			}
-			err = c.GetOutput(tt.ctx, bd.ID, tor)
+			err = c.GetOutput(tt.ctx, bd.ID(), tor)
 			if tt.expectStreamSuccess {
 				// Ensure the handler returned no error, and the response is as expected
 				if err != nil {
@@ -252,7 +246,7 @@ func TestBuild(t *testing.T) {
 				}
 			}
 
-			bd, err = c.GetStatus(tt.ctx, bd.ID)
+			_, err = c.GetStatus(tt.ctx, bd.ID())
 			if tt.expectStatusSuccess {
 				// Ensure the handler returned no error, and the response is as expected
 				if err != nil {

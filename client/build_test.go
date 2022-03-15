@@ -10,7 +10,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
+	"strings"
 	"testing"
 	"time"
 )
@@ -39,16 +39,9 @@ func TestSubmit(t *testing.T) {
 	s := httptest.NewServer(&m)
 	defer s.Close()
 
-	// Enough of a struct to test with
-	url, err := url.Parse(s.URL)
+	c, err := NewClient(OptBaseURL(s.URL))
 	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
-	}
-	c, err := New(&Config{
-		BaseURL: url.String(),
-	})
-	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
+		t.Fatal(err)
 	}
 
 	// Loop over test cases
@@ -57,24 +50,22 @@ func TestSubmit(t *testing.T) {
 			m.buildResponseCode = tt.responseCode
 
 			// Call the handler
-			bi, err := c.Submit(tt.ctx, BuildRequest{
-				DefinitionRaw: []byte{},
-				LibraryRef:    tt.libraryRef,
-				LibraryURL:    "",
-			})
+			bi, err := c.Submit(tt.ctx, strings.NewReader(""),
+				OptBuildLibraryRef(tt.libraryRef),
+			)
 
 			if got, want := err, tt.wantErr; !errors.Is(got, want) {
 				t.Fatalf("got error %v, want %v", got, want)
 			}
 
 			if err == nil {
-				if bi.ID == "" {
+				if bi.ID() == "" {
 					t.Fatalf("invalid ID")
 				}
-				if bi.LibraryRef == "" {
+				if bi.LibraryRef() == "" {
 					t.Errorf("empty Library ref")
 				}
-				if bi.LibraryURL == "" {
+				if bi.LibraryURL() == "" {
 					t.Errorf("empty Library URL")
 				}
 			}
@@ -88,16 +79,9 @@ func TestCancel(t *testing.T) {
 	s := httptest.NewServer(&m)
 	defer s.Close()
 
-	// Enough of a struct to test with
-	url, err := url.Parse(s.URL)
+	c, err := NewClient(OptBaseURL(s.URL))
 	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
-	}
-	c, err := New(&Config{
-		BaseURL: url.String(),
-	})
-	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
+		t.Fatal(err)
 	}
 
 	m.cancelResponseCode = 204

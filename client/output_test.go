@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 	"time"
 
@@ -68,17 +67,12 @@ func TestOutput(t *testing.T) {
 			// Mock server address is fixed for all tests
 			m.httpAddr = s.Listener.Addr().String()
 
-			url, err := url.Parse(s.URL)
+			c, err := NewClient(
+				OptBaseURL(s.URL),
+				OptBearerToken(authToken),
+			)
 			if err != nil {
-				t.Fatalf("failed to parse URL: %v", err)
-			}
-
-			c, err := New(&Config{
-				BaseURL:   url.String(),
-				AuthToken: authToken,
-			})
-			if err != nil {
-				t.Fatalf("failed to get new builder: %v", err)
+				t.Fatal(err)
 			}
 
 			// Set the response codes for each stage of the build

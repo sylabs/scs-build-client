@@ -9,32 +9,37 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	jsonresp "github.com/sylabs/json-resp"
 )
 
-// GetStatus gets the status of a build from the Build Service by build ID
-func (c *Client) GetStatus(ctx context.Context, buildID string) (BuildInfo, error) {
-	req, err := c.newRequest(http.MethodGet, "/v1/build/"+buildID, nil)
-	if err != nil {
-		return BuildInfo{}, fmt.Errorf("%w", err)
+// GetStatus gets the status of a build from the Build Service by build ID. The context controls
+// the lifetime of the request.
+func (c *Client) GetStatus(ctx context.Context, buildID string) (*BuildInfo, error) {
+	ref := &url.URL{
+		Path: "v1/build/" + buildID,
 	}
-	req = req.WithContext(ctx)
 
-	res, err := c.HTTPClient.Do(req)
+	req, err := c.newRequest(ctx, http.MethodGet, ref, nil)
 	if err != nil {
-		return BuildInfo{}, fmt.Errorf("%w", err)
+		return nil, fmt.Errorf("%w", err)
+	}
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 { // non-2xx status code
-		return BuildInfo{}, fmt.Errorf("%w", errorFromResponse(res))
+		return nil, fmt.Errorf("%w", errorFromResponse(res))
 	}
 
-	var bi BuildInfo
-	if err = jsonresp.ReadResponse(res.Body, &bi); err != nil {
-		return BuildInfo{}, fmt.Errorf("%w", err)
+	var rbi rawBuildInfo
+	if err = jsonresp.ReadResponse(res.Body, &rbi); err != nil {
+		return nil, fmt.Errorf("%w", err)
 	}
 
-	return bi, nil
+	return &BuildInfo{rbi}, nil
 }

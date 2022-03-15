@@ -30,10 +30,10 @@ func (app *App) retrieveArtifact(ctx context.Context, bi *build.BuildInfo, filen
 
 	w := io.MultiWriter(fp, h)
 
-	path, tag := splitLibraryRef(bi.LibraryRef)
+	path, tag := splitLibraryRef(bi.LibraryRef())
 
 	if err := app.libraryClient.DownloadImage(ctx, w, arch, path, tag, nil); err != nil {
-		return fmt.Errorf("error downloading image %s: %w", bi.LibraryRef, err)
+		return fmt.Errorf("error downloading image %v: %w", bi.LibraryRef(), err)
 	}
 
 	fi, err := fp.Stat()
@@ -44,7 +44,7 @@ func (app *App) retrieveArtifact(ctx context.Context, bi *build.BuildInfo, filen
 	_ = fp.Close()
 
 	// Verify image checksum
-	if values := strings.Split(bi.ImageChecksum, "."); len(values) == 2 {
+	if values := strings.Split(bi.ImageChecksum(), "."); len(values) == 2 {
 		if strings.ToLower(values[0]) == "sha256" {
 			imageChecksum := hex.EncodeToString(h.Sum(nil))
 			if values[1] != imageChecksum {

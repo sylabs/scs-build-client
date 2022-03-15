@@ -6,6 +6,7 @@
 package buildclient
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -14,22 +15,18 @@ import (
 )
 
 func (app *App) buildArtifact(ctx context.Context, def []byte, arch string, libraryRef string) (*build.BuildInfo, error) {
-	bi, err := app.buildClient.Submit(ctx, build.BuildRequest{
-		LibraryRef:    libraryRef,
-		LibraryURL:    app.libraryClient.BaseURL.String(),
-		DefinitionRaw: def,
-		BuilderRequirements: map[string]string{
-			"arch": arch,
-		},
-	})
+	bi, err := app.buildClient.Submit(ctx, bytes.NewReader(def),
+		build.OptBuildLibraryRef(libraryRef),
+		build.OptBuildArchitecture(arch),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error submitting remote build: %w", err)
 	}
-	if err := app.buildClient.GetOutput(ctx, bi.ID, os.Stdout); err != nil {
+	if err := app.buildClient.GetOutput(ctx, bi.ID(), os.Stdout); err != nil {
 		return nil, fmt.Errorf("error streaming remote build output: %w", err)
 	}
-	if bi, err = app.buildClient.GetStatus(ctx, bi.ID); err != nil {
+	if bi, err = app.buildClient.GetStatus(ctx, bi.ID()); err != nil {
 		return nil, fmt.Errorf("error getting remote build status: %w", err)
 	}
-	return &bi, nil
+	return bi, nil
 }
