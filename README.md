@@ -5,88 +5,56 @@
 [![Code Coverage](https://codecov.io/gh/sylabs/scs-build-client/branch/master/graph/badge.svg)](https://codecov.io/gh/sylabs/scs-build-client)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sylabs/scs-build-client)](https://goreportcard.com/report/github.com/sylabs/scs-build-client)
 
-This project provides a Go client for the Singularity Container Services (SCS) Build Service.
+The SCS Build Client allows users to build [Singularity Image Format (SIF)](https://github.com/sylabs/sif) images via the [Sylabs Cloud](https://cloud.sylabs.io) or [Singularity Enterprise](https://sylabs.io/singularity-enterprise) without the need to install and configure Singularity.
 
-## Go Version Compatibility
+The repository also contains the [`github.com/sylabs/scs-build-client/client`](https://pkg.go.dev/github.com/sylabs/scs-build-client/client) Go module, which can be used to integrate support into other applications.
 
-This module aims to maintain support for the two most recent stable versions of Go. This corresponds to the Go [Release Maintenance Policy](https://github.com/golang/go/wiki/Go-Release-Cycle#release-maintenance) and [Security Policy](https://golang.org/security), ensuring critical bug fixes and security patches are available for all supported language versions.
+## Usage
 
-## scs-build
+`scs-build` is available in DockerHub ([sylabsio/scs-build](https://hub.docker.com/r/sylabsio/scs-build)) and stanadlone binaries are also published with [each release](https://github.com/sylabs/scs-build-client/releases).
 
-### Overview
-
-`scs-build` is a tool for invoking [Sylabs Cloud](https://cloud.sylabs.io)
-and Singularity Enterprise Remote Build without the need for installing and
-configuring Singularity. It is intended to be integrated into a CI/CD workflow.
-
-### Usage
-
-#### Build and download artifact
+Obtain an authentication token from [Sylabs Cloud](https://cloud.sylabs.io) or Singularity Enterprise installation, and export it in the environment:
 
 ```sh
-scs-build build --auth-token ${SYLABS_AUTH_TOKEN} docker://alpine alpine_latest.sif
+export SYLABS_AUTH_TOKEN=...
 ```
 
-#### Build and push to default cloud library (cloud.sylabs.io)
+To build an image and retrieve it:
 
 ```sh
-scs-build build --auth-token ${SYLABS_AUTH_TOKEN} alpine.def library:user/default/alpine:latest
+# Sylabs Cloud (cloud.sylabs.io)
+scs-build build recipe.def image.sif
+
+# Singulairty Enterprise (replace cloud.enterprise.local with your installation)
+scs-build build --url https://cloud.enterprise.local recipe.def image.sif
 ```
 
-#### Build and push to local Singularity Enterprise
+To build an image, tag it and publish it directly to the Library:
 
 ```sh
-scs-build build --auth-token ${SYLABS_AUTH_TOKEN} alpine.def \
-    library://cloud.enterprise.local/user/default/alpine:latest
+# Sylabs Cloud (cloud.sylabs.io)
+scs-build build recipe.def library:<entity>/default/image:latest
+
+# Singulairty Enterprise (replace cloud.enterprise.local with your installation)
+scs-build build recipe.def library://cloud.enterprise.local/<entity>/default/image:latest
 ```
 
-#### Build ephemeral artifact
+Be sure to substitute `<entity>` appropriately (generally your username.)
 
-```sh
-export SYLABS_AUTH_TOKEN=xxx
-scs-build build alpine.def
-```
+## CI/CD Integration
 
-`SYLABS_AUTH_TOKEN` is obtained through "Access Tokens" in Sylabs Cloud web UI.
-
-#### Build ephemeral artifact in local Singularity Enterprise
-
-```sh
-export SYLABS_AUTH_TOKEN=xxx
-scs-build build --url https://cloud.enterprise.local alpine.def
-```
-
-#### Build ephemeral artifact using Docker image
-
-```sh
-export SYLABS_AUTH_TOKEN=xxx
-docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" scs-build:latest build docker://alpine
-```
-
-#### Build and download artifact using Docker image
-
-This example uses volume binding to permit `scs-build` to write the build
-artifact to the current directory of the Docker host.
-
-```sh
-export SYLABS_AUTH_TOKEN=xxx
-docker run -u $(id -u) -v `pwd`:/work --rm \
-    -e SYLABS_AUTH_TOKEN=${SYLABS_AUTH_TOKEN} \
-    sylabsio/scs-build build \
-    docker://alpine:3 \
-    /work/alpine_3.sif
-```
-
-### CI/CD Integration
-
-#### GitHub Actions
+### GitHub Actions
 
 Be sure to create a secret named `SYLABS_AUTH_TOKEN` containing token obtained from "Access Tokens" in [Sylabs Cloud](https://cloud.sylabs.io).
 
 See [examples/github-actions-ci.yaml](examples/github-actions-ci.yaml) for an example configuration.
 
-#### GitLab
+### GitLab
 
 Example [gitlab-ci.yml](examples/gitlab-ci.yml) is configured to build using file `alpine.def` contained within the project directory.
 
 This example configuration will store the build artifact (in this case, `artifact.sif`) within GitLab. Using a library reference (ie. `library:myuser/myproject/image`) will result in the build artifact automatically being pushed to [Sylabs Cloud](https://cloud.sylabs.io) or a local Singularity Enterprise installation.
+
+## Go Version Compatibility
+
+This module aims to maintain support for the two most recent stable versions of Go. This corresponds to the Go [Release Maintenance Policy](https://github.com/golang/go/wiki/Go-Release-Cycle#release-maintenance) and [Security Policy](https://golang.org/security), ensuring critical bug fixes and security patches are available for all supported language versions.
