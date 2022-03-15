@@ -344,8 +344,8 @@ github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/sylabs/json-resp v0.8.0 h1:bZ932uaF220aPqT0+x/vakoaGCGNbpLCjUFm1f+JKlY=
 github.com/sylabs/json-resp v0.8.0/go.mod h1:bUGV9cqShOyxz7RxBq03Yt9raKGfELKrfN6Yac3lfiw=
-github.com/sylabs/scs-library-client v1.2.1 h1:L8vOoG1/ByN0VSMgQjbhd8X8DbidA10nPuIiUd0oJFM=
-github.com/sylabs/scs-library-client v1.2.1/go.mod h1:WddtCtL42AAsmCiUe8oxjHKbER5vbXtaO7Cxlmf+n0c=
+github.com/sylabs/scs-library-client v1.2.2 h1:tg3rgOl1UKTtX3FxGo7XAyeVtysq9g5gJPOTao/TvDA=
+github.com/sylabs/scs-library-client v1.2.2/go.mod h1:5Kr7ZDkCTyMjoR4Ds1RUytXbZDE10LWH7VSeMOorfus=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
