@@ -85,6 +85,9 @@ jobs:
           name: Install Cross-Platform Emulators
           command: docker run --privileged --rm tonistiigi/binfmt --install all
       - run:
+          name: Install syft
+          command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+      - run:
           name: Test Release
           command: curl -sL https://git.io/goreleaser | bash -s -- --snapshot --skip-publish
 
