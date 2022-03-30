@@ -110,3 +110,6 @@ docker_manifests:
   - name_template: sylabsio/scs-build:{{ .Major }}.{{ .Minor }}.{{ .Patch }}
     image_templates: *manifest-images
     skip_push: auto
+
+sboms:
+  - artifacts: archive
