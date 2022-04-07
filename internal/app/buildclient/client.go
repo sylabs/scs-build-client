@@ -131,7 +131,7 @@ func getClients(ctx context.Context, skipVerify bool, endpoint, authToken, userA
 	buildClient, err := build.NewClient(
 		build.OptBaseURL(feCfg.BuildAPI.URI),
 		build.OptBearerToken(authToken),
-		build.OptUserAgent(authToken),
+		build.OptUserAgent(userAgent),
 		build.OptHTTPClient(&http.Client{Transport: tr}),
 	)
 	if err != nil {
