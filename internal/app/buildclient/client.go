@@ -50,14 +50,22 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 		buildSpec: cfg.DefFileName,
 		force:     cfg.Force,
 	}
+	var libraryRefHost string
 
 	// Parse/validate image spec (local file or library ref)
 	if strings.HasPrefix(cfg.LibraryRef, library.Scheme+":") {
-		// Parse as library ref
-		ref, err := library.Parse(cfg.LibraryRef)
+		ref, err := library.ParseAmbiguous(cfg.LibraryRef)
 		if err != nil {
 			return nil, fmt.Errorf("malformed library ref: %w", err)
 		}
+
+		if ref.Host != "" {
+			// Ref contains a host. Note this to determine the front end URL, but don't include it
+			// in the LibraryRef, since the Build Service expects a hostless format.
+			libraryRefHost = ref.Host
+			ref.Host = ""
+		}
+
 		app.LibraryRef = ref
 	} else if cfg.LibraryRef != "" {
 		// Parse as URL
@@ -72,7 +80,7 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 	}
 
 	// Determine frontend URL either from library ref, if provided or url, if provided, or default.
-	feURL, err := getFrontendURL(app.LibraryRef, cfg.URL)
+	feURL, err := getFrontendURL(cfg.URL, libraryRefHost)
 	if err != nil {
 		return nil, err
 	}
@@ -84,38 +92,30 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 	return app, nil
 }
 
-func getFrontendURL(r *library.Ref, urlOverride string) (string, error) {
-	if urlOverride == "" && (r == nil || r.Host == "") {
-		return defaultFrontendURL, nil
-	}
-
-	if r != nil && r.Host != "" && urlOverride == "" {
-		return fmt.Sprintf("https://%v", r.Host), nil
-	}
-
-	var u *url.URL
-
+// getFrontendURL determines the front end value based on urlOverride and/or libraryRefHost.
+func getFrontendURL(urlOverride, libraryRefHost string) (string, error) {
 	if urlOverride != "" {
-		var err error
-		if u, err = url.Parse(urlOverride); err != nil {
+		if libraryRefHost == "" {
+			return urlOverride, nil
+		}
+
+		u, err := url.Parse(urlOverride)
+		if err != nil {
 			return "", err
 		}
-		if u.Scheme == "file" || u.Scheme == "" {
-			return defaultFrontendURL, nil
-		}
-	}
 
-	if r != nil && r.Host == "" && u != nil {
-		return u.String(), nil
-	}
-
-	if r != nil && r.Host != "" && u != nil {
-		if r.Host != u.Host {
+		if u.Host != libraryRefHost {
 			return "", errors.New("conflicting arguments")
 		}
+
+		return urlOverride, nil
 	}
 
-	return u.String(), nil
+	if libraryRefHost != "" {
+		return "https://" + libraryRefHost, nil
+	}
+
+	return defaultFrontendURL, nil
 }
 
 // getClients returns initialized clients for remote build and cloud library
@@ -183,11 +183,7 @@ func (app *App) Run(ctx context.Context, arch string) error {
 		}
 		artifactFileName = app.dstFileName
 	} else if app.LibraryRef != nil {
-		// Massage library ref into format currently accepted by remote-build
-		libraryRef = fmt.Sprintf("library://%v", app.LibraryRef.Path)
-		if len(app.LibraryRef.Tags) > 0 {
-			libraryRef += ":" + strings.Join(app.LibraryRef.Tags, ",")
-		}
+		libraryRef = app.LibraryRef.String()
 	}
 
 	var def []byte
