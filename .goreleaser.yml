@@ -112,4 +112,7 @@ docker_manifests:
     skip_push: auto
 
 sboms:
-  - artifacts: archive
+  - documents:
+      - "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}.bom.cdx.json"
+    artifacts: binary
+    args: ["$artifact", "--file", "$document", "--output", "cyclonedx-json"]
