@@ -202,7 +202,7 @@ func (app *App) Run(ctx context.Context, arch string) error {
 	// send build request
 	bi, err := app.buildArtifact(ctx, def, arch, libraryRef)
 	if err != nil {
-		return fmt.Errorf("error building artifact: %w", err)
+		return err
 	}
 
 	if artifactFileName == "" {

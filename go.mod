@@ -9,7 +9,6 @@ require (
 	github.com/stretchr/testify v1.7.1
 	github.com/sylabs/json-resp v0.8.1
 	github.com/sylabs/scs-library-client v1.3.1
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
 
 require (
@@ -30,6 +29,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
