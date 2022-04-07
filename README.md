@@ -11,7 +11,7 @@ The repository also contains the [`github.com/sylabs/scs-build-client/client`](h
 
 ## Usage
 
-`scs-build` is available in DockerHub ([sylabsio/scs-build](https://hub.docker.com/r/sylabsio/scs-build)) and stanadlone binaries are also published with [each release](https://github.com/sylabs/scs-build-client/releases).
+`scs-build` is available in DockerHub ([sylabsio/scs-build](https://hub.docker.com/r/sylabsio/scs-build)) and standalone binaries are also published with [each release](https://github.com/sylabs/scs-build-client/releases).
 
 Obtain an authentication token from [Sylabs Cloud](https://cloud.sylabs.io) or Singularity Enterprise installation, and export it in the environment:
 
@@ -25,7 +25,7 @@ To build an image and retrieve it:
 # Sylabs Cloud (cloud.sylabs.io)
 scs-build build recipe.def image.sif
 
-# Singulairty Enterprise (replace cloud.enterprise.local with your installation)
+# Singularity Enterprise (replace cloud.enterprise.local with your installation)
 scs-build build --url https://cloud.enterprise.local recipe.def image.sif
 ```
 
@@ -35,7 +35,7 @@ To build an image, tag it and publish it directly to the Library:
 # Sylabs Cloud (cloud.sylabs.io)
 scs-build build recipe.def library:<entity>/default/image:latest
 
-# Singulairty Enterprise (replace cloud.enterprise.local with your installation)
+# Singularity Enterprise (replace cloud.enterprise.local with your installation)
 scs-build build recipe.def library://cloud.enterprise.local/<entity>/default/image:latest
 ```
 

@@ -17,7 +17,7 @@ To build an image, tag it and publish it directly to the Library:
 docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" \
     sylabsio/scs-build build recipe.def library:<entity>/default/image:latest
 
-# Singulairty Enterprise (replace cloud.enterprise.local with your installation)
+# Singularity Enterprise (replace cloud.enterprise.local with your installation)
 docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" \
     sylabsio/scs-build build recipe.def library://cloud.enterprise.local/<entity>/default/image:latest
 ```
@@ -30,7 +30,7 @@ docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" \
     -u $(id -u) -v `pwd`:/work \
     sylabsio/scs-build build /work/recipe.def /work/image.sif
 
-# Singulairty Enterprise (replace cloud.enterprise.local with your installation)
+# Singularity Enterprise (replace cloud.enterprise.local with your installation)
 docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" \
     -u $(id -u) -v `pwd`:/work \
     sylabsio/scs-build build --url https://cloud.enterprise.local /work/recipe.def /work/image.sif
