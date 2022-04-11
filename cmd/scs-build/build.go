@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/sylabs/scs-build-client/internal/app/buildclient"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -114,38 +113,19 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		cancel()
 	}()
 
-	// run application
-	g := new(errgroup.Group)
+	archsToBuild := v.GetStringSlice(keyArch)
 
-	g.Go(func() error {
-		archsToBuild := v.GetStringSlice(keyArch)
-
-		if len(archsToBuild) > 1 {
-			fmt.Printf("Performing build for following architectures: %v\n", strings.Join(archsToBuild, " "))
-		}
-
-		var buildErr error
-
-		for _, arch := range v.GetStringSlice(keyArch) {
-			fmt.Printf("Building for %v...\n", arch)
-
-			if err := app.Run(ctx, arch); err != nil {
-				fmt.Fprintf(os.Stderr, "Build %v failed: %v\n", arch, err)
-				if buildErr != nil {
-					buildErr = err
-				}
-			}
-		}
-
-		if buildErr != nil {
-			return buildErr
-		}
-		return nil
-	})
-
-	if err := g.Wait(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	if len(archsToBuild) > 1 {
+		fmt.Printf("Performing build for following architectures: %v\n", strings.Join(archsToBuild, " "))
 	}
 
-	return err
+	for _, arch := range v.GetStringSlice(keyArch) {
+		fmt.Printf("Building for %v...\n", arch)
+
+		if err := app.Run(ctx, arch); err != nil {
+			return fmt.Errorf("failed to build %v: %w", arch, err)
+		}
+	}
+
+	return nil
 }
