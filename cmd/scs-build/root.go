@@ -15,8 +15,10 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "scs-build",
-	Short: "Sylabs Cloud Build Client",
+	Use:           "scs-build",
+	Short:         "Sylabs Cloud Build Client",
+	SilenceErrors: true,
+	SilenceUsage:  true,
 }
 
 // Build metadata set by linker.
