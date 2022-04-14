@@ -113,19 +113,5 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		cancel()
 	}()
 
-	archsToBuild := v.GetStringSlice(keyArch)
-
-	if len(archsToBuild) > 1 {
-		fmt.Printf("Performing build for following architectures: %v\n", strings.Join(archsToBuild, " "))
-	}
-
-	for _, arch := range v.GetStringSlice(keyArch) {
-		fmt.Printf("Building for %v...\n", arch)
-
-		if err := app.Run(ctx, arch); err != nil {
-			return fmt.Errorf("failed to build %v: %w", arch, err)
-		}
-	}
-
-	return nil
+	return app.Run(ctx, v.GetStringSlice(keyArch))
 }

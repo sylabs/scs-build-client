@@ -34,14 +34,18 @@ func writeArchive(w io.Writer, fsys fs.FS, paths []string) error {
 
 	for _, path := range paths {
 		if err := ar.WriteFiles(path); err != nil {
-			return fmt.Errorf("failed to write to archive: %w", err)
+			return err
 		}
 	}
 
 	return nil
 }
 
+var errContextAlreadyPresent = errors.New("build context already present")
+
 // getBuildContextUploadLocation obtains an upload location for a build context.
+//
+// If errContextAlreadyPresent is returned, (re)upload of build context is not required.
 func (c *Client) getBuildContextUploadLocation(ctx context.Context, size int64, digest string) (*url.URL, error) {
 	ref := &url.URL{
 		Path: "v1/build-context",
@@ -74,6 +78,11 @@ func (c *Client) getBuildContextUploadLocation(ctx context.Context, size int64, 
 
 	if res.StatusCode/100 != 2 { // non-2xx status code
 		return nil, fmt.Errorf("%w", errorFromResponse(res))
+	}
+
+	if res.Header.Get("Location") == "" {
+		// "Location" header is not present; build context does not need to be uploaded
+		return nil, errContextAlreadyPresent
 	}
 
 	return url.Parse(res.Header.Get("Location"))
@@ -127,6 +136,9 @@ func (c *Client) uploadBuildContext(ctx context.Context, rw io.ReadWriteSeeker, 
 	// Get the build context upload location.
 	loc, err := c.getBuildContextUploadLocation(ctx, size, digest)
 	if err != nil {
+		if errors.Is(err, errContextAlreadyPresent) {
+			return digest, nil
+		}
 		return "", fmt.Errorf("failed to get build context upload location: %w", err)
 	}
 

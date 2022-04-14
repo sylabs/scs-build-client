@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -28,11 +29,7 @@ type FrontendConfig struct {
 }
 
 func getFrontendConfigURL(frontendURL string) string {
-	url := frontendURL
-	if !strings.HasSuffix(url, "/") {
-		url += "/"
-	}
-	return url + frontendConfigPath
+	return fmt.Sprintf("%v/%v", strings.TrimSuffix(frontendURL, "/"), frontendConfigPath)
 }
 
 func GetFrontendConfig(ctx context.Context, skipVerify bool, frontendURL string) (*FrontendConfig, error) {
@@ -51,6 +48,10 @@ func GetFrontendConfig(ctx context.Context, skipVerify bool, frontendURL string)
 		return nil, err
 	}
 	defer res.Body.Close()
+
+	if res.StatusCode/100 != 2 { // non-2xx status code
+		return nil, fmt.Errorf("error getting configuration (HTTP status code %d)", res.StatusCode)
+	}
 
 	var cfg FrontendConfig
 	if err := json.NewDecoder(res.Body).Decode(&cfg); err != nil {
