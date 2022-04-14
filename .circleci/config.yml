@@ -112,6 +112,19 @@ jobs:
       - run:
           name: Publish Release
           command: curl -sL https://git.io/goreleaser | bash
+      - run:
+          name: Install cosign
+          command: go install github.com/sigstore/cosign/cmd/cosign@latest
+      - run:
+          name: Get Cosign Key
+          command: echo $COSIGN_KEY > cosign.key
+      - run:
+          name: Create attestations
+          command: for i in amd64 arm64v8; do syft attest --key ./cosign.key sylabsio/scs-build:$CIRCLE_TAG-$i -o cyclonedx-json > ./scs-build-$CIRCLE_TAG-$i.bom.att.json; done
+      - run:
+          name: Attach attestations to image
+          command: for i in amd64 arm64v8; do cosign attach attestation sylabsio/scs-build:$CIRCLE_TAG-$i --attestation ./scs-build-$CIRCLE_TAG-$i.bom.att.json; done
+            
 
 workflows:
   version: 2
