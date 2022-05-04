@@ -41,9 +41,10 @@ func (bi *BuildInfo) LibraryRef() string    { return bi.raw.LibraryRef }
 func (bi *BuildInfo) LibraryURL() string    { return bi.raw.LibraryURL }
 
 type buildOptions struct {
-	libraryRef string
-	arch       string
-	libraryURL string
+	libraryRef    string
+	arch          string
+	libraryURL    string
+	contextDigest string
 }
 
 type BuildOption func(*buildOptions) error
@@ -73,6 +74,15 @@ func OptBuildLibraryPullBaseURL(libraryURL string) BuildOption {
 	}
 }
 
+// OptBuildContext instructs the Build Service to expose the build context with the specified
+// digest during the build. The build context must be uploaded using UploadBuildContext.
+func OptBuildContext(digest string) BuildOption {
+	return func(bo *buildOptions) error {
+		bo.contextDigest = digest
+		return nil
+	}
+}
+
 // Submit sends a build job to the Build Service. The context controls the lifetime of the request.
 //
 // By default, the built image will be pushed to an ephemeral location in the Library associated
@@ -85,6 +95,9 @@ func OptBuildLibraryPullBaseURL(libraryURL string) BuildOption {
 // By default, if definition involves pulling one or more images from a Library reference that does
 // not contain a hostname, they will be pulled from the Library associated with the Remote Builder.
 // To override this behaviour, consider using OptBuildLibraryPullBaseURL.
+//
+// By default, local files referenced in the supplied definition will not be available on the Build
+// Service. To expose local files, consider using OptBuildContext.
 func (c *Client) Submit(ctx context.Context, definition io.Reader, opts ...BuildOption) (*BuildInfo, error) {
 	bo := buildOptions{
 		arch: runtime.GOARCH,
@@ -106,10 +119,12 @@ func (c *Client) Submit(ctx context.Context, definition io.Reader, opts ...Build
 		LibraryRef          string            `json:"libraryRef"`
 		LibraryURL          string            `json:"libraryURL,omitempty"`
 		BuilderRequirements map[string]string `json:"builderRequirements,omitempty"`
+		ContextDigest       string            `json:"contextChecksum,omitempty"`
 	}{
 		DefinitionRaw: raw,
 		LibraryRef:    bo.libraryRef,
 		LibraryURL:    bo.libraryURL,
+		ContextDigest: bo.contextDigest,
 	}
 
 	if bo.arch != "" {
