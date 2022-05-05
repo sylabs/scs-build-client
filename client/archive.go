@@ -30,8 +30,8 @@ func newArchiver(fsys fs.FS, w io.Writer) *archiver {
 
 var errUnsupportedType = errors.New("unsupported file type")
 
-// WritePath writes the named path from the file system to the archive.
-func (ar *archiver) WritePath(name string) error {
+// writeEntry writes the named path from the file system to the archive.
+func (ar *archiver) writeEntry(name string) error {
 	// Get file info.
 	fi, err := fs.Stat(ar.fs, name)
 	if err != nil {
@@ -80,6 +80,51 @@ func (ar *archiver) WritePath(name string) error {
 		defer f.Close()
 
 		if _, err := io.Copy(ar.w, f); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// walkDirFunc returns a WalkDirFunc that writes each path to ar.
+func (ar *archiver) walkDirFunc() fs.WalkDirFunc {
+	return func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if path == "." {
+			return nil
+		}
+
+		return ar.writeEntry(path)
+	}
+}
+
+// WritePath writes the named path from the file system to the archive. If the named path is a
+// directory, its contents are recursively added using fs.WalkDir.
+func (ar *archiver) WritePath(path string) error {
+	names, err := fs.Glob(ar.fs, path)
+	if err != nil {
+		return err
+	}
+
+	if len(names) == 0 {
+		return fmt.Errorf("%v: %w", path, fs.ErrNotExist)
+	}
+
+	for _, name := range names {
+		fi, err := fs.Stat(ar.fs, name)
+		if err != nil {
+			return err
+		}
+
+		if fi.IsDir() {
+			if err := fs.WalkDir(ar.fs, name, ar.walkDirFunc()); err != nil {
+				return err
+			}
+		} else if err := ar.writeEntry(name); err != nil {
 			return err
 		}
 	}

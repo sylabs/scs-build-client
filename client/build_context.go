@@ -21,6 +21,10 @@ import (
 )
 
 // writeArchive writes a compressed archive containing paths read from fsys to w.
+//
+// Paths must be specified in the rootless format specified by the io/fs package. If a path
+// contains a glob, it will be evaluated as per fs.Glob. If a path specifies a directory, its
+// contents will be walked as per fs.WalkDir.
 func writeArchive(w io.Writer, fsys fs.FS, paths []string) error {
 	gw := gzip.NewWriter(w)
 	defer gw.Close()
@@ -100,6 +104,10 @@ func (c *Client) putBuildContext(ctx context.Context, loc *url.URL, r io.Reader,
 
 // uploadBuildContext generates an archive in rw containing the files at the specified paths in
 // fsys, and uploads it to the Build Service.
+//
+// Paths must be specified in the rootless format specified by the io/fs package. If a path
+// contains a glob, it will be evaluated as per fs.Glob. If a path specifies a directory, its
+// contents will be walked as per fs.WalkDir.
 func (c *Client) uploadBuildContext(ctx context.Context, rw io.ReadWriteSeeker, fsys fs.FS, paths []string) (digest string, err error) {
 	// Write a compressed archive and accumulate its digest.
 	h := sha256.New()

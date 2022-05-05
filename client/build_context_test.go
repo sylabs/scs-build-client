@@ -106,9 +106,17 @@ func (m *mockUploadBuildContext) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 func TestClient_UploadBuildContext(t *testing.T) {
 	fsys := fstest.MapFS{
+		"a": &fstest.MapFile{
+			Mode:    0o755 | fs.ModeDir,
+			ModTime: testTime,
+		},
 		"a/b": &fstest.MapFile{
 			Data:    []byte("a"),
 			Mode:    0o755,
+			ModTime: testTime,
+		},
+		"c": &fstest.MapFile{
+			Mode:    0o755 | fs.ModeDir,
 			ModTime: testTime,
 		},
 		"c/d": &fstest.MapFile{
@@ -132,10 +140,29 @@ func TestClient_UploadBuildContext(t *testing.T) {
 			wantErr: errNoPathsSpecified,
 		},
 		{
+			name:    "NotExistPath",
+			paths:   []string{"b"},
+			wantErr: fs.ErrNotExist,
+		},
+		{
 			name:    "HTTPError",
 			code1:   http.StatusBadRequest,
 			paths:   []string{"."},
 			wantErr: &httpError{Code: http.StatusBadRequest},
+		},
+		{
+			name: "WalkDir",
+			paths: []string{
+				".",
+			},
+			wantDigest: "sha256.b59c5b1086aac46b5ca3c83e3b9cb1966b30f8681c77da044a6b81d6823ec893",
+		},
+		{
+			name: "Glob",
+			paths: []string{
+				"*",
+			},
+			wantDigest: "sha256.b59c5b1086aac46b5ca3c83e3b9cb1966b30f8681c77da044a6b81d6823ec893",
 		},
 		{
 			name: "OneFile",

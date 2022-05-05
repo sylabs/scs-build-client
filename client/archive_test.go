@@ -18,7 +18,7 @@ import (
 
 var testTime = time.Unix(1504657553, 0)
 
-func Test_archiver_WriteFile(t *testing.T) {
+func Test_archiver_WritePath(t *testing.T) {
 	tests := []struct {
 		name    string
 		fs      fs.FS
@@ -30,39 +30,6 @@ func Test_archiver_WriteFile(t *testing.T) {
 			fs:      fstest.MapFS{},
 			path:    "a/b",
 			wantErr: fs.ErrNotExist,
-		},
-		{
-			name: "Regular",
-			fs: fstest.MapFS{
-				"a/b": &fstest.MapFile{
-					Data:    []byte("hello"),
-					Mode:    0o755,
-					ModTime: testTime,
-				},
-			},
-			path: "a/b",
-		},
-		{
-			name: "Dir",
-			fs: fstest.MapFS{
-				"a/b": &fstest.MapFile{
-					Data:    []byte("hello"),
-					Mode:    0o755 | fs.ModeDir,
-					ModTime: testTime,
-				},
-			},
-			path: "a/b",
-		},
-		{
-			name: "Symlink",
-			fs: fstest.MapFS{
-				"a/b": &fstest.MapFile{
-					Data:    []byte("hello"),
-					Mode:    0o755 | fs.ModeSymlink,
-					ModTime: testTime,
-				},
-			},
-			path: "a/b",
 		},
 		{
 			name: "NamedPipe",
@@ -93,6 +60,100 @@ func Test_archiver_WriteFile(t *testing.T) {
 			},
 			path:    "a/b",
 			wantErr: errUnsupportedType,
+		},
+		{
+			name: "Regular",
+			fs: fstest.MapFS{
+				"a/b": &fstest.MapFile{
+					Data:    []byte("hello"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
+			},
+			path: "a/b",
+		},
+		{
+			name: "Symlink",
+			fs: fstest.MapFS{
+				"a/b": &fstest.MapFile{
+					Data:    []byte("hello"),
+					Mode:    0o755 | fs.ModeSymlink,
+					ModTime: testTime,
+				},
+			},
+			path: "a/b",
+		},
+		{
+			name: "WalkDirRoot",
+			fs: fstest.MapFS{
+				"a": &fstest.MapFile{
+					Mode:    0o755 | fs.ModeDir,
+					ModTime: testTime,
+				},
+				"a/b": &fstest.MapFile{
+					Data:    []byte("hello"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
+				"a/c": &fstest.MapFile{
+					Data:    []byte("goodbye"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
+			},
+			path: ".",
+		},
+		{
+			name: "WalkDirPath",
+			fs: fstest.MapFS{
+				"a": &fstest.MapFile{
+					Mode:    0o755 | fs.ModeDir,
+					ModTime: testTime,
+				},
+				"a/b": &fstest.MapFile{
+					Data:    []byte("hello"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
+				"a/c": &fstest.MapFile{
+					Data:    []byte("goodbye"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
+			},
+			path: "a",
+		},
+		{
+			name: "FileGlob",
+			fs: fstest.MapFS{
+				"a/b": &fstest.MapFile{
+					Data:    []byte("hello"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
+				"a/c": &fstest.MapFile{
+					Data:    []byte("goodbye"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
+			},
+			path: "a/*",
+		},
+		{
+			name: "DirGlob",
+			fs: fstest.MapFS{
+				"a/b": &fstest.MapFile{
+					Data:    []byte("hello"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
+				"c/b": &fstest.MapFile{
+					Data:    []byte("goodbye"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
+			},
+			path: "*/b",
 		},
 	}
 	for _, tt := range tests {
