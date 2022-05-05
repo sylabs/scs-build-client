@@ -75,9 +75,9 @@ func (c *Client) getBuildContextUploadLocation(ctx context.Context, size int64, 
 	return url.Parse(res.Header.Get("Location"))
 }
 
-// postBuildContext uploads the build context read from r to the specified location.
-func (c *Client) postBuildContext(ctx context.Context, loc *url.URL, r io.Reader, size int64) error {
-	req, err := c.newRequest(ctx, http.MethodPost, loc, r)
+// putBuildContext uploads the build context read from r to the specified location.
+func (c *Client) putBuildContext(ctx context.Context, loc *url.URL, r io.Reader, size int64) error {
+	req, err := c.newRequest(ctx, http.MethodPut, loc, r)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (c *Client) uploadBuildContext(ctx context.Context, rw io.ReadWriteSeeker, 
 	}
 
 	// Upload build context.
-	if err := c.postBuildContext(ctx, loc, rw, size); err != nil {
+	if err := c.putBuildContext(ctx, loc, rw, size); err != nil {
 		return "", fmt.Errorf("failed to upload build context: %w", err)
 	}
 

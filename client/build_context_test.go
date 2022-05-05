@@ -30,14 +30,14 @@ type mockUploadBuildContext struct {
 }
 
 func (m *mockUploadBuildContext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if got, want := r.Method, http.MethodPost; got != want {
-		m.t.Errorf("got method %v, want %v", got, want)
-	}
-
 	// The general flow is that the client POST to /v1/build-context to get an upload URL, and then
 	// POST the archive to the upload URL.
 	switch r.URL.Path {
 	case "/v1/build-context":
+		if got, want := r.Method, http.MethodPost; got != want {
+			m.t.Errorf("got method %v, want %v", got, want)
+		}
+
 		if m.code1 != 0 {
 			w.WriteHeader(m.code1)
 			return
@@ -65,6 +65,10 @@ func (m *mockUploadBuildContext) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(http.StatusAccepted)
 
 	case "/upload-here":
+		if got, want := r.Method, http.MethodPut; got != want {
+			m.t.Errorf("got method %v, want %v", got, want)
+		}
+
 		if m.code2 != 0 {
 			w.WriteHeader(m.code2)
 			return
