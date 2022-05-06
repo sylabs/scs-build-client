@@ -13,6 +13,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"runtime"
 
 	jsonresp "github.com/sylabs/json-resp"
@@ -45,6 +47,7 @@ type buildOptions struct {
 	arch          string
 	libraryURL    string
 	contextDigest string
+	workingDir    string
 }
 
 type BuildOption func(*buildOptions) error
@@ -83,6 +86,19 @@ func OptBuildContext(digest string) BuildOption {
 	}
 }
 
+// OptBuildWorkingDirectory sets dir as the current working directory to include in the request.
+func OptBuildWorkingDirectory(dir string) BuildOption {
+	return func(bo *buildOptions) error {
+		dir, err := filepath.Abs(dir)
+		if err != nil {
+			return err
+		}
+
+		bo.workingDir = dir
+		return nil
+	}
+}
+
 // Submit sends a build job to the Build Service. The context controls the lifetime of the request.
 //
 // By default, the built image will be pushed to an ephemeral location in the Library associated
@@ -98,9 +114,19 @@ func OptBuildContext(digest string) BuildOption {
 //
 // By default, local files referenced in the supplied definition will not be available on the Build
 // Service. To expose local files, consider using OptBuildContext.
+//
+// The client includes the current working directory in the request, since the supplied definition
+// may include paths that are relative to it. By default, the client attempts to derive the current
+// working directory using os.Getwd(), falling back to "/" on error. To override this behaviour,
+// consider using OptBuildWorkingDirectory.
 func (c *Client) Submit(ctx context.Context, definition io.Reader, opts ...BuildOption) (*BuildInfo, error) {
 	bo := buildOptions{
-		arch: runtime.GOARCH,
+		arch:       runtime.GOARCH,
+		workingDir: "/",
+	}
+
+	if dir, err := os.Getwd(); err == nil {
+		bo.workingDir = dir
 	}
 
 	for _, opt := range opts {
@@ -120,11 +146,13 @@ func (c *Client) Submit(ctx context.Context, definition io.Reader, opts ...Build
 		LibraryURL          string            `json:"libraryURL,omitempty"`
 		BuilderRequirements map[string]string `json:"builderRequirements,omitempty"`
 		ContextDigest       string            `json:"contextChecksum,omitempty"`
+		WorkingDir          string            `json:"workingDir,omitempty"`
 	}{
 		DefinitionRaw: raw,
 		LibraryRef:    bo.libraryRef,
 		LibraryURL:    bo.libraryURL,
 		ContextDigest: bo.contextDigest,
+		WorkingDir:    bo.workingDir,
 	}
 
 	if bo.arch != "" {
