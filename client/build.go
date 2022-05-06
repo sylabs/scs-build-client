@@ -145,7 +145,7 @@ func (c *Client) Submit(ctx context.Context, definition io.Reader, opts ...Build
 		LibraryRef          string            `json:"libraryRef"`
 		LibraryURL          string            `json:"libraryURL,omitempty"`
 		BuilderRequirements map[string]string `json:"builderRequirements,omitempty"`
-		ContextDigest       string            `json:"contextChecksum,omitempty"`
+		ContextDigest       string            `json:"contextDigest,omitempty"`
 		WorkingDir          string            `json:"workingDir,omitempty"`
 	}{
 		DefinitionRaw: raw,

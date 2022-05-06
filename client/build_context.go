@@ -49,7 +49,7 @@ func (c *Client) getBuildContextUploadLocation(ctx context.Context, size int64, 
 
 	body := struct {
 		Size   int64  `json:"size"`
-		Digest string `json:"checksum"`
+		Digest string `json:"digest"`
 	}{
 		Size:   size,
 		Digest: digest,

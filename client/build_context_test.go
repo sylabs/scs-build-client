@@ -49,7 +49,7 @@ func (m *mockUploadBuildContext) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		var body struct {
 			Size   int64  `json:"size"`
-			Digest string `json:"checksum"`
+			Digest string `json:"digest"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			m.t.Fatalf("failed to decode request: %v", err)
