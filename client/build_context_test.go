@@ -169,7 +169,7 @@ func TestClient_UploadBuildContext(t *testing.T) {
 			paths: []string{
 				"a/b",
 			},
-			wantDigest: "sha256.37196eb7e4e93ba4ac97942e053dc31bb7132ad711ddc14e757fd096d389b97f",
+			wantDigest: "sha256.260f31076fb13f26070866751c27e4528c0e49d0690a1c9468148915e177baaf",
 		},
 		{
 			name: "TwoFiles",
@@ -177,7 +177,7 @@ func TestClient_UploadBuildContext(t *testing.T) {
 				"a/b",
 				"c/d",
 			},
-			wantDigest: "sha256.fc3acf5795d393a706682d78bedf02dc0674fd44b7dd7aa83d91e7560b64bb51",
+			wantDigest: "sha256.b59c5b1086aac46b5ca3c83e3b9cb1966b30f8681c77da044a6b81d6823ec893",
 		},
 	}
 	for _, tt := range tests {

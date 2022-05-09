@@ -33,7 +33,7 @@ func writeArchive(w io.Writer, fsys fs.FS, paths []string) error {
 	defer ar.Close()
 
 	for _, path := range paths {
-		if err := ar.WritePath(path); err != nil {
+		if err := ar.WriteFiles(path); err != nil {
 			return fmt.Errorf("failed to write to archive: %w", err)
 		}
 	}

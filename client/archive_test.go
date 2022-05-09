@@ -18,17 +18,17 @@ import (
 
 var testTime = time.Unix(1504657553, 0)
 
-func Test_archiver_WritePath(t *testing.T) {
+func Test_archiver_WriteFiles(t *testing.T) {
 	tests := []struct {
 		name    string
 		fs      fs.FS
-		path    string
+		paths   []string
 		wantErr error
 	}{
 		{
 			name:    "NotExist",
 			fs:      fstest.MapFS{},
-			path:    "a/b",
+			paths:   []string{"a/b"},
 			wantErr: fs.ErrNotExist,
 		},
 		{
@@ -38,7 +38,7 @@ func Test_archiver_WritePath(t *testing.T) {
 					Mode: 0o755 | fs.ModeNamedPipe,
 				},
 			},
-			path:    "a/b",
+			paths:   []string{"a/b"},
 			wantErr: errUnsupportedType,
 		},
 		{
@@ -48,7 +48,7 @@ func Test_archiver_WritePath(t *testing.T) {
 					Mode: 0o755 | fs.ModeDevice,
 				},
 			},
-			path:    "a/b",
+			paths:   []string{"a/b"},
 			wantErr: errUnsupportedType,
 		},
 		{
@@ -58,30 +58,38 @@ func Test_archiver_WritePath(t *testing.T) {
 					Mode: 0o755 | fs.ModeDevice | fs.ModeCharDevice,
 				},
 			},
-			path:    "a/b",
+			paths:   []string{"a/b"},
 			wantErr: errUnsupportedType,
 		},
 		{
 			name: "Regular",
 			fs: fstest.MapFS{
+				"a": &fstest.MapFile{
+					Mode:    0o755 | fs.ModeDir,
+					ModTime: testTime,
+				},
 				"a/b": &fstest.MapFile{
 					Data:    []byte("hello"),
 					Mode:    0o755,
 					ModTime: testTime,
 				},
 			},
-			path: "a/b",
+			paths: []string{"a/b"},
 		},
 		{
 			name: "Symlink",
 			fs: fstest.MapFS{
+				"a": &fstest.MapFile{
+					Mode:    0o755 | fs.ModeDir,
+					ModTime: testTime,
+				},
 				"a/b": &fstest.MapFile{
 					Data:    []byte("hello"),
 					Mode:    0o755 | fs.ModeSymlink,
 					ModTime: testTime,
 				},
 			},
-			path: "a/b",
+			paths: []string{"a/b"},
 		},
 		{
 			name: "WalkDirRoot",
@@ -101,7 +109,7 @@ func Test_archiver_WritePath(t *testing.T) {
 					ModTime: testTime,
 				},
 			},
-			path: ".",
+			paths: []string{"."},
 		},
 		{
 			name: "WalkDirPath",
@@ -121,11 +129,15 @@ func Test_archiver_WritePath(t *testing.T) {
 					ModTime: testTime,
 				},
 			},
-			path: "a",
+			paths: []string{"a"},
 		},
 		{
 			name: "FileGlob",
 			fs: fstest.MapFS{
+				"a": &fstest.MapFile{
+					Mode:    0o755 | fs.ModeDir,
+					ModTime: testTime,
+				},
 				"a/b": &fstest.MapFile{
 					Data:    []byte("hello"),
 					Mode:    0o755,
@@ -137,14 +149,22 @@ func Test_archiver_WritePath(t *testing.T) {
 					ModTime: testTime,
 				},
 			},
-			path: "a/*",
+			paths: []string{"a/*"},
 		},
 		{
 			name: "DirGlob",
 			fs: fstest.MapFS{
+				"a": &fstest.MapFile{
+					Mode:    0o755 | fs.ModeDir,
+					ModTime: testTime,
+				},
 				"a/b": &fstest.MapFile{
 					Data:    []byte("hello"),
 					Mode:    0o755,
+					ModTime: testTime,
+				},
+				"c": &fstest.MapFile{
+					Mode:    0o755 | fs.ModeDir,
 					ModTime: testTime,
 				},
 				"c/b": &fstest.MapFile{
@@ -153,7 +173,32 @@ func Test_archiver_WritePath(t *testing.T) {
 					ModTime: testTime,
 				},
 			},
-			path: "*/b",
+			paths: []string{"*/b"},
+		},
+		{
+			name: "Duplicates",
+			fs: fstest.MapFS{
+				"a": &fstest.MapFile{
+					Mode:    0o755 | fs.ModeDir,
+					ModTime: testTime,
+				},
+				"a/b": &fstest.MapFile{
+					Mode:    0o755 | fs.ModeDir,
+					ModTime: testTime,
+				},
+				"a/b/c": &fstest.MapFile{
+					Data:    []byte("hello"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
+			},
+			paths: []string{
+				"a/b/c",
+				"a/b",
+				"a",
+				"*",
+				".",
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -162,8 +207,10 @@ func Test_archiver_WritePath(t *testing.T) {
 
 			ar := newArchiver(tt.fs, &b)
 
-			if got, want := ar.WritePath(tt.path), tt.wantErr; !errors.Is(got, want) {
-				t.Errorf("got error %v, want %v", got, want)
+			for _, path := range tt.paths {
+				if got, want := ar.WriteFiles(path), tt.wantErr; !errors.Is(got, want) {
+					t.Errorf("got error %v, want %v", got, want)
+				}
 			}
 
 			if err := ar.Close(); err != nil {
