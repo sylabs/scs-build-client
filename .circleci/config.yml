@@ -114,7 +114,9 @@ jobs:
           command: curl -sL https://git.io/goreleaser | bash
       - run:
           name: Install cosign
-          command: go install github.com/sigstore/cosign/cmd/cosign@latest
+          command: |
+            wget https://github.com/sigstore/cosign/releases/download/v1.8.0/cosign_1.8.0_amd64.deb
+            dpkg -i cosign_1.8.0_amd64.deb
       - run:
           name: Get Cosign Key
           command: echo $COSIGN_KEY > cosign.key
