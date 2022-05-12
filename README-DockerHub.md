@@ -42,10 +42,10 @@ docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" \
 
 Be sure to create a secret named `SYLABS_AUTH_TOKEN` containing token obtained from "Access Tokens" in [Sylabs Cloud](https://cloud.sylabs.io).
 
-See [examples/github-actions-ci.yaml](https://github.com/sylabs/scs-build-client/blob/master/examples/github-actions-ci.yaml) for an example configuration.
+See [examples/github-actions-ci.yaml](https://github.com/sylabs/scs-build-client/blob/main/examples/github-actions-ci.yaml) for an example configuration.
 
 ### GitLab
 
-Example [gitlab-ci.yml](https://github.com/sylabs/scs-build-client/blob/master/examples/gitlab-ci.yml) is configured to build using file `alpine.def` contained within the project directory.
+Example [gitlab-ci.yml](https://github.com/sylabs/scs-build-client/blob/main/examples/gitlab-ci.yml) is configured to build using file `alpine.def` contained within the project directory.
 
 This example configuration will store the build artifact (in this case, `artifact.sif`) within GitLab. Using a library reference (ie. `library:myuser/myproject/image`) will result in the build artifact automatically being pushed to [Sylabs Cloud](https://cloud.sylabs.io) or a local Singularity Enterprise installation.
