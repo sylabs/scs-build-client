@@ -6,7 +6,7 @@
 FROM alpine:latest AS build-stage
 RUN apk --no-cache add ca-certificates
 
-FROM scratch
+FROM alpine:latest
 COPY --from=build-stage /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY scs-build /
 
