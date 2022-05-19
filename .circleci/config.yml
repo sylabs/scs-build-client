@@ -126,7 +126,7 @@ jobs:
             for ARCH in amd64 arm64v8
             do
               IMAGE="sylabsio/scs-build:${CIRCLE_TAG}-${ARCH}"
-              syft attest -o cyclonedx-json "${IMAGE}" > sbom.att.json
+              syft attest --key ./cosign.key -o cyclonedx-json "${IMAGE}" > sbom.att.json
               cosign attach attestation --attestation sbom.att.json "${IMAGE}"
             done
 
