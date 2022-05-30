@@ -159,3 +159,4 @@ workflows:
           context:
             - dockerhub-release
             - github-release
+            - cosign-release
