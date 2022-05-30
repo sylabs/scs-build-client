@@ -123,9 +123,10 @@ jobs:
       - run:
           name: Attach attestations to image
           command: |
+            TAG="`echo $CIRCLE_TAG | sed -e 's/^v//'`"
             for ARCH in amd64 arm64v8
             do
-              IMAGE="sylabsio/scs-build:${CIRCLE_TAG}-${ARCH}"
+              IMAGE="sylabsio/scs-build:${TAG}-${ARCH}"
               syft attest -v --key ./cosign.key -o cyclonedx-json "${IMAGE}" > sbom.att.json
               cosign attach attestation --attestation sbom.att.json "${IMAGE}"
             done
