@@ -119,14 +119,15 @@ jobs:
             dpkg -i cosign_1.8.0_amd64.deb
       - run:
           name: Get Cosign Key
-          command: echo $COSIGN_KEY > cosign.key
+          command: echo $COSIGN_KEY | base64 -d > cosign.key
       - run:
           name: Attach attestations to image
           command: |
+            TAG="`echo $CIRCLE_TAG | sed -e 's/^v//'`"
             for ARCH in amd64 arm64v8
             do
-              IMAGE="sylabsio/scs-build:${CIRCLE_TAG}-${ARCH}"
-              syft attest --key ./cosign.key -o cyclonedx-json "${IMAGE}" > sbom.att.json
+              IMAGE="sylabsio/scs-build:${TAG}-${ARCH}"
+              syft attest -v --key ./cosign.key -o cyclonedx-json "${IMAGE}" > sbom.att.json
               cosign attach attestation --attestation sbom.att.json "${IMAGE}"
             done
 
@@ -159,3 +160,4 @@ workflows:
           context:
             - dockerhub-release
             - github-release
+            - cosign-release
