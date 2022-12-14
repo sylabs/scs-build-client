@@ -9,7 +9,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
 	github.com/sylabs/json-resp v0.8.2
-	github.com/sylabs/scs-library-client v1.4.0
+	github.com/sylabs/scs-library-client v1.4.1
 )
 
 require (
