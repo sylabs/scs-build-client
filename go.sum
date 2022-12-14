@@ -1064,8 +1064,8 @@ github.com/subosito/gotenv v1.4.1 h1:jyEFiXpy21Wm81FBN71l9VoMMV8H8jG+qIK3GCpY6Qs
 github.com/subosito/gotenv v1.4.1/go.mod h1:ayKnFf/c6rvx/2iiLrJUk1e6plDbT3edrFNGqEflhK0=
 github.com/sylabs/json-resp v0.8.2 h1:k2dgtMXL+nztYtxrI24Zck/sfexyly4D1+X504eZTKQ=
 github.com/sylabs/json-resp v0.8.2/go.mod h1:Q9X4wRlZNPv3x76KaL8vTCBO4aC/DP2gh13xdtEqd1g=
-github.com/sylabs/scs-library-client v1.4.0 h1:npkqe1At7htFf+yeffvHzgl4fTiWgEY00f/edkTES4A=
-github.com/sylabs/scs-library-client v1.4.0/go.mod h1:nCAsuxBKCNGHKCrMae0EuySFEJgYFSRgqq4X/c7kI2g=
+github.com/sylabs/scs-library-client v1.4.1 h1:OdjON/Kp3YrfkEyymYjQ0ye06k+2axHoFCckfaf9xQI=
+github.com/sylabs/scs-library-client v1.4.1/go.mod h1:nCAsuxBKCNGHKCrMae0EuySFEJgYFSRgqq4X/c7kI2g=
 github.com/sylabs/sif/v2 v2.9.0 h1:q9K92j1QW4/QLOtKh9YZpJHrXav6x15AVhQGPVLcg+4=
 github.com/sylabs/sif/v2 v2.9.0/go.mod h1:bRdFzcqif0eDjwx0isG4cgTFoKTQn/vfBXVSoP2rB2Y=
 github.com/syndtr/goleveldb v1.0.0/go.mod h1:ZVVdQEZoIme9iO1Ch2Jdy24qqXrMMOU6lpPAyBWyWuQ=
