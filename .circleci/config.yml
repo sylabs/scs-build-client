@@ -89,7 +89,7 @@ jobs:
           command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - run:
           name: Test Release
-          command: curl -sL https://git.io/goreleaser | bash -s -- --snapshot --skip-publish
+          command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release --snapshot --skip-publish
 
   publish-release:
     executor: golang-latest
@@ -111,7 +111,7 @@ jobs:
           command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - run:
           name: Publish Release
-          command: curl -sL https://git.io/goreleaser | bash
+          command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release 
       - run:
           name: Install cosign
           command: |
