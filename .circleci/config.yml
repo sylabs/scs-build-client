@@ -9,13 +9,13 @@ executors:
       - image: node:18-slim
   golangci-lint:
     docker:
-      - image: golangci/golangci-lint:v1.49
+      - image: golangci/golangci-lint:v1.51
   golang-previous:
     docker:
-      - image: golang:1.18
+      - image: golang:1.19
   golang-latest:
     docker:
-      - image: golang:1.19
+      - image: golang:1.20
 
 jobs:
   lint-markdown:
@@ -89,7 +89,7 @@ jobs:
           command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - run:
           name: Test Release
-          command: curl -sL https://git.io/goreleaser | bash -s -- --snapshot --skip-publish
+          command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release --snapshot --skip-publish
 
   publish-release:
     executor: golang-latest
@@ -111,12 +111,12 @@ jobs:
           command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - run:
           name: Publish Release
-          command: curl -sL https://git.io/goreleaser | bash
+          command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release 
       - run:
           name: Install cosign
           command: |
-            wget https://github.com/sigstore/cosign/releases/download/v1.12.0/cosign_1.12.0_amd64.deb
-            dpkg -i cosign_1.12.0_amd64.deb
+            wget https://github.com/sigstore/cosign/releases/download/v1.13.1/cosign_1.13.1_amd64.deb
+            dpkg -i cosign_1.13.1_amd64.deb
       - run:
           name: Get Cosign Key
           command: echo $COSIGN_KEY | base64 -d > cosign.key
