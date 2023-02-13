@@ -115,8 +115,8 @@ jobs:
       - run:
           name: Install cosign
           command: |
-            wget https://github.com/sigstore/cosign/releases/download/v1.12.0/cosign_1.12.0_amd64.deb
-            dpkg -i cosign_1.12.0_amd64.deb
+            wget https://github.com/sigstore/cosign/releases/download/v1.13.1/cosign_1.13.1_amd64.deb
+            dpkg -i cosign_1.13.1_amd64.deb
       - run:
           name: Get Cosign Key
           command: echo $COSIGN_KEY | base64 -d > cosign.key
