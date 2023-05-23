@@ -29,7 +29,7 @@ const (
 
 var buildCmd = &cobra.Command{
 	Use:   "build [flags] <build spec> <image path>",
-	Short: "Perform remote build on Sylabs Cloud (https://cloud.sylabs.io) or Singularity Enterprise",
+	Short: "Perform remote build on Singularity Container Services (https://cloud.sylabs.io) or Singularity Enterprise",
 	Args:  cobra.MinimumNArgs(1),
 	RunE:  executeBuildCmd,
 	Example: `
@@ -60,7 +60,7 @@ func addBuildCommand(rootCmd *cobra.Command) {
 	buildCmd.Flags().String(keyAccessToken, "", "Access token")
 	buildCmd.Flags().Bool(keySkipTLSVerify, false, "Skip SSL/TLS certificate verification")
 	buildCmd.Flags().StringSlice(keyArch, []string{runtime.GOARCH}, "Requested build architecture")
-	buildCmd.Flags().String(keyFrontendURL, "", "Sylabs Cloud or Singularity Enterprise URL")
+	buildCmd.Flags().String(keyFrontendURL, "", "Singularity Container Services or Singularity Enterprise URL")
 	buildCmd.Flags().Bool(keyForceOverwrite, false, "Overwrite image file if it exists")
 	rootCmd.AddCommand(buildCmd)
 }

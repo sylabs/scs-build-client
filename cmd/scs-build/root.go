@@ -16,7 +16,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:           "scs-build",
-	Short:         "Sylabs Cloud Build Client",
+	Short:         "Singularity Container Services Build Client",
 	SilenceErrors: true,
 	SilenceUsage:  true,
 }
