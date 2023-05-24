@@ -1,4 +1,4 @@
-// Copyright (c) 2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -234,10 +234,7 @@ func (app *App) Run(ctx context.Context, archs []string) error {
 	}
 
 	if len(archs) == 1 {
-		if err := app.doBuild(ctx, rawDef, archs[0], digest, false); err != nil {
-			return err
-		}
-		return nil
+		return app.doBuild(ctx, rawDef, archs[0], digest, false)
 	}
 
 	fmt.Printf("Performing builds for following architectures: %v\n", strings.Join(archs, " "))
