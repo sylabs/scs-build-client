@@ -233,11 +233,9 @@ func (app *App) Run(ctx context.Context, archs []string) error {
 		return fmt.Errorf("error uploading build context: %w", err)
 	}
 
-	if len(archs) == 1 {
-		return app.doBuild(ctx, rawDef, archs[0], digest, false)
+	if len(archs) > 1 {
+		fmt.Printf("Performing builds for following architectures: %v\n", strings.Join(archs, " "))
 	}
-
-	fmt.Printf("Performing builds for following architectures: %v\n", strings.Join(archs, " "))
 
 	errs := make(map[string]error)
 
@@ -245,7 +243,7 @@ func (app *App) Run(ctx context.Context, archs []string) error {
 	for _, arch := range archs {
 		fmt.Printf("Building for %v...\n", arch)
 
-		if err := app.doBuild(ctx, rawDef, arch, digest, true); err != nil {
+		if err := app.doBuild(ctx, rawDef, arch, digest, len(archs) > 1); err != nil {
 			errs[arch] = err
 			continue
 		}
