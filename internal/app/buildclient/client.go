@@ -269,23 +269,21 @@ func (app *App) build(ctx context.Context, bs buildSpec) error {
 // reportErrs iterates over arch/error map and outputs error(s) to console
 func (app *App) reportErrs(errs map[string]error) error {
 	// Report any build errors
-	errCount := len(errs)
 
-	if errCount > 1 {
-		fmt.Fprintf(os.Stderr, "\nBuild error(s):\n")
-
-		for arch, err := range errs {
-			fmt.Fprintf(os.Stderr, "  - %v: %v\n", arch, err)
-		}
-		fmt.Fprintln(os.Stderr)
-		return errors.New("failed to build images")
-	}
-
-	for k := range errs {
-		if err, found := errs[k]; found {
+	if len(errs) == 1 {
+		// Return first (and only) error
+		for _, err := range errs {
 			return err
 		}
 	}
 
-	return nil
+	fmt.Fprintf(os.Stderr, "\nBuild error(s):\n")
+
+	for arch, err := range errs {
+		fmt.Fprintf(os.Stderr, "  - %v: %v\n", arch, err)
+	}
+
+	fmt.Fprintln(os.Stderr)
+
+	return errors.New("failed to build images")
 }
