@@ -21,6 +21,8 @@ import (
 	library "github.com/sylabs/scs-library-client/client"
 )
 
+const defaultFrontendURL = "https://cloud.sylabs.io"
+
 // Config contains set up for application
 type Config struct {
 	URL           string
@@ -44,10 +46,17 @@ type App struct {
 	buildURL      string
 	skipTLSVerify bool
 	archsToBuild  []string
-	multipleArchs bool
 }
 
-const defaultFrontendURL = "https://cloud.sylabs.io"
+type buildSpec struct {
+	Def        []byte
+	Context    string
+	LibraryRef *library.Ref
+	FileName   string
+	Archs      []string
+}
+
+var errNoBuildContextFiles = errors.New("no files referenced in build definition")
 
 // New creates new application instance
 func New(ctx context.Context, cfg *Config) (*App, error) {
@@ -56,7 +65,6 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 		force:         cfg.Force,
 		skipTLSVerify: cfg.SkipTLSVerify,
 		archsToBuild:  cfg.ArchsToBuild,
-		multipleArchs: len(cfg.ArchsToBuild) > 1,
 	}
 	var libraryRefHost string
 
@@ -152,8 +160,6 @@ func getFrontendURL(urlOverride, libraryRefHost string) (string, error) {
 	return defaultFrontendURL, nil
 }
 
-var errNoBuildContextFiles = errors.New("no files referenced in build definition")
-
 // uploadBuildContext parses definition file specified by 'rawDef' and uploads build context
 // containing files referenced in '%files' section(s) to build server.
 //
@@ -177,95 +183,109 @@ func (app *App) uploadBuildContext(ctx context.Context, rawDef []byte) (string, 
 	return digest, nil
 }
 
-// doBuild performs builds and (optionally) retrieves build artifacts.
-//
-// 'appendArchSuffix' toggles whether to append arch suffix to prevent
-// filename collisions when building local artifacts for multiple archs.
-func (app *App) doBuild(ctx context.Context, rawDef []byte, arch, digest string) error {
-	var artifactFileName string
-
-	if app.dstFileName != "" {
-		// Ensure destination file doesn't already exist (or --force is specified)
-		if _, err := os.Stat(app.dstFileName); !os.IsNotExist(err) && !app.force {
-			return fmt.Errorf("file %v already exists", app.dstFileName)
-		}
-
-		artifactFileName = app.dstFileName
-		if app.multipleArchs {
-			// append arch to local file name if more than one arch is requested
-			artifactFileName += "-" + arch
-		}
+func appendFileSuffix(name, suffix string, appendSuffix bool) string {
+	if !appendSuffix {
+		return name
 	}
-
-	// send build request
-	bi, err := app.buildArtifact(ctx, arch, app.LibraryRef, digest, rawDef)
-	if err != nil {
-		return err
-	}
-
-	// check if artifact should be downloaded (pulled) locally
-	if artifactFileName == "" {
-		// Build completed successfully
-
-		// local (file) destination not specified
-		if app.LibraryRef == nil {
-			// library ref not specified so build artifact is transient
-			fmt.Printf("Build artifact %v is available for 24 hours or less\n", bi.LibraryRef())
-		}
-		return nil
-	}
-
-	if err := app.retrieveArtifact(ctx, bi, artifactFileName, arch); err != nil {
-		return fmt.Errorf("error retrieving build artifact: %w", err)
-	}
-	return nil
+	return fmt.Sprintf("%v-%v", name, suffix)
 }
 
 // Run is the main application entrypoint
 func (app *App) Run(ctx context.Context) error {
-	rawDef, err := app.getBuildDef()
+	// Initialize build specification
+	bs := buildSpec{
+		LibraryRef: app.LibraryRef,
+		FileName:   app.dstFileName,
+		Archs:      app.archsToBuild,
+	}
+
+	if !app.force && bs.FileName != "" {
+		// Check for existence of dst files
+		for _, arch := range bs.Archs {
+			fn := appendFileSuffix(bs.FileName, arch, len(bs.Archs) > 1)
+
+			if _, err := os.Stat(fn); !os.IsNotExist(err) {
+				return fmt.Errorf("destination file %q already exists", fn)
+			}
+		}
+	}
+
+	var err error
+	bs.Def, err = app.getBuildDef(app.buildSpec)
 	if err != nil {
-		return fmt.Errorf("build definition error: %w", err)
+		return fmt.Errorf("unable to get build definition: %w", err)
 	}
 
 	// Upload build context, as necessary
-	digest, err := app.uploadBuildContext(ctx, rawDef)
+	bs.Context, err = app.uploadBuildContext(ctx, bs.Def)
 	if err != nil && !errors.Is(err, errNoBuildContextFiles) {
 		return fmt.Errorf("error uploading build context: %w", err)
 	}
 
-	if app.multipleArchs {
-		fmt.Printf("Performing builds for following architectures: %v\n", strings.Join(app.archsToBuild, " "))
+	if len(bs.Archs) > 1 {
+		fmt.Printf("Performing builds for following architectures: %v\n", strings.Join(bs.Archs, " "))
 	}
 
+	return app.build(ctx, bs)
+}
+
+func (app *App) build(ctx context.Context, bs buildSpec) error {
 	errs := make(map[string]error)
 
-	// Submit build request for each specified architecture
-	for _, arch := range app.archsToBuild {
+	for _, arch := range bs.Archs {
 		fmt.Printf("Building for %v...\n", arch)
 
-		if err := app.doBuild(ctx, rawDef, arch, digest); err != nil {
+		// Submit build request
+		bi, err := app.buildArtifact(ctx, arch, bs)
+		if err != nil {
 			errs[arch] = err
+			continue
+		}
+
+		// Build completed successfully
+		if app.dstFileName == "" {
+			// Library ref specified; image pushed to library automatically
+			if app.LibraryRef == nil {
+				fmt.Printf("Build artifact %v is available for 24 hours or less\n", bi.LibraryRef())
+			}
+			continue
+		}
+
+		// Download file locally
+		if err := app.retrieveArtifact(ctx, bi, appendFileSuffix(bs.FileName, arch, len(bs.Archs) > 1), arch); err != nil {
+			errs[arch] = fmt.Errorf("error retrieving build artifact: %w", err)
 			continue
 		}
 	}
 
-	// Report any build errors
-	if errCount := len(errs); errCount != 0 {
-		if errCount > 1 {
-			fmt.Fprintf(os.Stderr, "\nBuild error(s):\n")
+	if len(errs) == 0 {
+		// Build(s) completed successfully
+		return nil
+	}
 
-			for arch, err := range errs {
-				fmt.Fprintf(os.Stderr, "  - %v: %v\n", arch, err)
-			}
-			fmt.Fprintln(os.Stderr)
-			return errors.New("failed to build images")
+	return app.reportErrs(errs)
+}
+
+// reportErrs iterates over arch/error map and outputs error(s) to console
+func (app *App) reportErrs(errs map[string]error) error {
+	// Report any build errors
+	errCount := len(errs)
+
+	if errCount > 1 {
+		fmt.Fprintf(os.Stderr, "\nBuild error(s):\n")
+
+		for arch, err := range errs {
+			fmt.Fprintf(os.Stderr, "  - %v: %v\n", arch, err)
 		}
-		for k := range errs {
-			if err, found := errs[k]; found {
-				return err
-			}
+		fmt.Fprintln(os.Stderr)
+		return errors.New("failed to build images")
+	}
+
+	for k := range errs {
+		if err, found := errs[k]; found {
+			return err
 		}
 	}
+
 	return nil
 }

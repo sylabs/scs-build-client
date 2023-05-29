@@ -14,19 +14,18 @@ import (
 	"strings"
 
 	build "github.com/sylabs/scs-build-client/client"
-	library "github.com/sylabs/scs-library-client/client"
 )
 
 // buildArtifact sends a build request for the specified arch, optionally publishing it to
 // libraryRef. Output is streamed to standard output. If the build cannot be submitted, or does not
 // succeed, an error is returned.
-func (app *App) buildArtifact(ctx context.Context, arch string, libraryRef *library.Ref, digest string, rawDef []byte) (*build.BuildInfo, error) {
-	opts := []build.BuildOption{build.OptBuildArchitecture(arch), build.OptBuildContext(digest)}
-	if libraryRef != nil {
-		opts = append(opts, build.OptBuildLibraryRef(libraryRef.String()))
+func (app *App) buildArtifact(ctx context.Context, arch string, bs buildSpec) (*build.BuildInfo, error) {
+	opts := []build.BuildOption{build.OptBuildArchitecture(arch), build.OptBuildContext(bs.Context)}
+	if bs.LibraryRef != nil {
+		opts = append(opts, build.OptBuildLibraryRef(bs.LibraryRef.String()))
 	}
 
-	bi, err := app.buildClient.Submit(ctx, bytes.NewReader(rawDef), opts...)
+	bi, err := app.buildClient.Submit(ctx, bytes.NewReader(bs.Def), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error submitting remote build: %w", err)
 	}
@@ -43,8 +42,8 @@ func (app *App) buildArtifact(ctx context.Context, arch string, libraryRef *libr
 		return nil, errors.New("failed to build image")
 	}
 
-	if digest != "" {
-		_ = app.buildClient.DeleteBuildContext(ctx, digest)
+	if bs.Context != "" {
+		_ = app.buildClient.DeleteBuildContext(ctx, bs.Context)
 	}
 
 	return bi, nil
@@ -70,16 +69,12 @@ func definitionFromURI(raw string) (def []byte, ok bool) {
 	return b.Bytes(), true
 }
 
-func (app *App) getBuildDef() ([]byte, error) {
+func (app *App) getBuildDef(uri string) ([]byte, error) {
 	// Build spec could be a URI, or the path to a definition file.
-	if b, ok := definitionFromURI(app.buildSpec); ok {
+	if b, ok := definitionFromURI(uri); ok {
 		return b, nil
 	}
 
 	// Attempt to read app.buildSpec as a file
-	b, err := os.ReadFile(app.buildSpec)
-	if err != nil {
-		return nil, fmt.Errorf("error reading def file %v: %w", app.buildSpec, err)
-	}
-	return b, nil
+	return os.ReadFile(uri)
 }
