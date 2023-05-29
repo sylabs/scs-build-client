@@ -177,7 +177,6 @@ func (app *App) uploadBuildContext(ctx context.Context, rawDef []byte) (string, 
 // 'appendArchSuffix' toggles whether to append arch suffix to prevent
 // filename collisions when building local artifacts for multiple archs.
 func (app *App) doBuild(ctx context.Context, rawDef []byte, arch, digest string, appendArchSuffix bool) error {
-	var libraryRef string
 	var artifactFileName string
 
 	if app.dstFileName != "" {
@@ -191,12 +190,10 @@ func (app *App) doBuild(ctx context.Context, rawDef []byte, arch, digest string,
 			// append arch to local file name if more than one arch is requested
 			artifactFileName += "-" + arch
 		}
-	} else if app.LibraryRef != nil {
-		libraryRef = app.LibraryRef.String()
 	}
 
 	// send build request
-	bi, err := app.buildArtifact(ctx, arch, libraryRef, digest, rawDef)
+	bi, err := app.buildArtifact(ctx, arch, app.LibraryRef, digest, rawDef)
 	if err != nil {
 		return err
 	}
@@ -206,8 +203,8 @@ func (app *App) doBuild(ctx context.Context, rawDef []byte, arch, digest string,
 		// Build completed successfully
 
 		// local (file) destination not specified
-		if libraryRef == "" {
-			// library ref not specified so build artfifact is transient
+		if app.LibraryRef != nil {
+			// library ref not specified so build artifact is transient
 			fmt.Printf("Build artifact %v is available for 24 hours or less\n", bi.LibraryRef())
 		}
 		return nil
