@@ -239,33 +239,31 @@ func (app *App) Run(ctx context.Context, archs []string) error {
 
 	fmt.Printf("Performing builds for following architectures: %v\n", strings.Join(archs, " "))
 
-	buildErrs := make(map[string]error)
+	errs := make(map[string]error)
 
 	// Submit build request for each specified architecture
 	for _, arch := range archs {
 		fmt.Printf("Building for %v...\n", arch)
 
 		if err := app.doBuild(ctx, rawDef, arch, digest, true); err != nil {
-			buildErrs[arch] = err
+			errs[arch] = err
 			continue
 		}
 	}
 
 	// Report any build errors
-	if nBuildErrs := len(buildErrs); nBuildErrs != 0 {
-		if nBuildErrs > 1 {
+	if errCount := len(errs); errCount != 0 {
+		if errCount > 1 {
 			fmt.Fprintf(os.Stderr, "\nBuild error(s):\n")
 
-			for _, arch := range archs {
-				if err, found := buildErrs[arch]; found {
-					fmt.Fprintf(os.Stderr, "  - %v: %v\n", arch, err)
-				}
+			for arch, err := range errs {
+				fmt.Fprintf(os.Stderr, "  - %v: %v\n", arch, err)
 			}
 			fmt.Fprintln(os.Stderr)
 			return errors.New("failed to build images")
 		}
-		for k := range buildErrs {
-			if err, found := buildErrs[k]; found {
+		for k := range errs {
+			if err, found := errs[k]; found {
 				return err
 			}
 		}
