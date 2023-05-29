@@ -227,8 +227,7 @@ func (app *App) Run(ctx context.Context, archs []string) error {
 	}
 
 	// Upload build context, as necessary
-	var digest string
-	digest, err = app.uploadBuildContext(ctx, rawDef)
+	digest, err := app.uploadBuildContext(ctx, rawDef)
 	if err != nil && !errors.Is(err, errNoBuildContextFiles) {
 		return fmt.Errorf("error uploading build context: %w", err)
 	}
