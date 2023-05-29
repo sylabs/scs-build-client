@@ -30,6 +30,7 @@ type Config struct {
 	LibraryRef    string
 	Force         bool
 	UserAgent     string
+	ArchsToBuild  []string
 }
 
 // App represents the application instance
@@ -42,6 +43,8 @@ type App struct {
 	force         bool
 	buildURL      string
 	skipTLSVerify bool
+	archsToBuild  []string
+	multipleArchs bool
 }
 
 const defaultFrontendURL = "https://cloud.sylabs.io"
@@ -52,6 +55,8 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 		buildSpec:     cfg.DefFileName,
 		force:         cfg.Force,
 		skipTLSVerify: cfg.SkipTLSVerify,
+		archsToBuild:  cfg.ArchsToBuild,
+		multipleArchs: len(cfg.ArchsToBuild) > 1,
 	}
 	var libraryRefHost string
 
@@ -176,7 +181,7 @@ func (app *App) uploadBuildContext(ctx context.Context, rawDef []byte) (string, 
 //
 // 'appendArchSuffix' toggles whether to append arch suffix to prevent
 // filename collisions when building local artifacts for multiple archs.
-func (app *App) doBuild(ctx context.Context, rawDef []byte, arch, digest string, appendArchSuffix bool) error {
+func (app *App) doBuild(ctx context.Context, rawDef []byte, arch, digest string) error {
 	var artifactFileName string
 
 	if app.dstFileName != "" {
@@ -186,7 +191,7 @@ func (app *App) doBuild(ctx context.Context, rawDef []byte, arch, digest string,
 		}
 
 		artifactFileName = app.dstFileName
-		if appendArchSuffix {
+		if app.multipleArchs {
 			// append arch to local file name if more than one arch is requested
 			artifactFileName += "-" + arch
 		}
@@ -203,7 +208,7 @@ func (app *App) doBuild(ctx context.Context, rawDef []byte, arch, digest string,
 		// Build completed successfully
 
 		// local (file) destination not specified
-		if app.LibraryRef != nil {
+		if app.LibraryRef == nil {
 			// library ref not specified so build artifact is transient
 			fmt.Printf("Build artifact %v is available for 24 hours or less\n", bi.LibraryRef())
 		}
@@ -217,7 +222,7 @@ func (app *App) doBuild(ctx context.Context, rawDef []byte, arch, digest string,
 }
 
 // Run is the main application entrypoint
-func (app *App) Run(ctx context.Context, archs []string) error {
+func (app *App) Run(ctx context.Context) error {
 	rawDef, err := app.getBuildDef()
 	if err != nil {
 		return fmt.Errorf("build definition error: %w", err)
@@ -229,17 +234,17 @@ func (app *App) Run(ctx context.Context, archs []string) error {
 		return fmt.Errorf("error uploading build context: %w", err)
 	}
 
-	if len(archs) > 1 {
-		fmt.Printf("Performing builds for following architectures: %v\n", strings.Join(archs, " "))
+	if app.multipleArchs {
+		fmt.Printf("Performing builds for following architectures: %v\n", strings.Join(app.archsToBuild, " "))
 	}
 
 	errs := make(map[string]error)
 
 	// Submit build request for each specified architecture
-	for _, arch := range archs {
+	for _, arch := range app.archsToBuild {
 		fmt.Printf("Building for %v...\n", arch)
 
-		if err := app.doBuild(ctx, rawDef, arch, digest, len(archs) > 1); err != nil {
+		if err := app.doBuild(ctx, rawDef, arch, digest); err != nil {
 			errs[arch] = err
 			continue
 		}

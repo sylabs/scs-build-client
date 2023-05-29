@@ -1,4 +1,4 @@
-// Copyright (c) 2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -98,6 +98,7 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		SkipTLSVerify: v.GetBool(keySkipTLSVerify),
 		Force:         v.GetBool(keyForceOverwrite),
 		UserAgent:     fmt.Sprintf("scs-build/%v", version),
+		ArchsToBuild:  v.GetStringSlice(keyArch),
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Application init error: %v\n", err)
@@ -113,5 +114,5 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		cancel()
 	}()
 
-	return app.Run(ctx, v.GetStringSlice(keyArch))
+	return app.Run(ctx)
 }
