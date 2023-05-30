@@ -1,4 +1,4 @@
-// Copyright (c) 2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -19,13 +19,13 @@ const frontendConfigPath = "assets/config/config.prod.json"
 
 var errServerMisconfigured = errors.New("remote server is misconfigured")
 
-type uri struct {
+type URI struct {
 	URI string `json:"uri"`
 }
 
 type FrontendConfig struct {
-	LibraryAPI uri `json:"libraryAPI"`
-	BuildAPI   uri `json:"builderAPI"`
+	LibraryAPI URI `json:"libraryAPI"`
+	BuildAPI   URI `json:"builderAPI"`
 }
 
 func getFrontendConfigURL(frontendURL string) string {

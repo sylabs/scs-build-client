@@ -1,4 +1,4 @@
-// Copyright (c) 2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -48,8 +48,8 @@ func TestGetFrontendConfig(t *testing.T) {
 		{
 			"Simple",
 			&FrontendConfig{
-				LibraryAPI: uri{URI: "https://library.sylabs.io"},
-				BuildAPI:   uri{URI: "https://build.sylabs.io"},
+				LibraryAPI: URI{URI: "https://library.sylabs.io"},
+				BuildAPI:   URI{URI: "https://build.sylabs.io"},
 			},
 			"https://library.sylabs.io",
 			"https://build.sylabs.io",
