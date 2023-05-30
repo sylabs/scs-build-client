@@ -36,13 +36,6 @@ func (app *App) retrieveArtifact(ctx context.Context, bi *build.BuildInfo, filen
 		return fmt.Errorf("error downloading image %v: %w", bi.LibraryRef(), err)
 	}
 
-	fi, err := fp.Stat()
-	if err != nil {
-		return fmt.Errorf("error getting file description: %w", err)
-	}
-
-	_ = fp.Close()
-
 	// Verify image checksum
 	if values := strings.Split(bi.ImageChecksum(), "."); len(values) == 2 {
 		if strings.ToLower(values[0]) == "sha256" {
@@ -54,8 +47,6 @@ func (app *App) retrieveArtifact(ctx context.Context, bi *build.BuildInfo, filen
 			}
 		}
 	}
-
-	fmt.Fprintf(os.Stderr, "Wrote %s (%d bytes)\n", filename, fi.Size())
 
 	return nil
 }
