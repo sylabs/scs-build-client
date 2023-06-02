@@ -58,7 +58,9 @@ var buildCmd = &cobra.Command{
 
       scs-build build alpine.def
 
-  Note: ephemeral artifacts are short-lived and are usually deleted within 24 hours.`,
+  Note: ephemeral artifacts are short-lived and are usually deleted within 24 hours.
+  
+  Using --fingerprint or --keyidx flags will enable automatic PGP signing`,
 }
 
 var errNotSupported = errors.New("build and sign ephemeral image is not supported")
@@ -69,10 +71,10 @@ func addBuildCommand(rootCmd *cobra.Command) {
 	buildCmd.Flags().StringSlice(keyArch, []string{runtime.GOARCH}, "Requested build architecture")
 	buildCmd.Flags().String(keyFrontendURL, "", "Singularity Container Services or Singularity Enterprise URL")
 	buildCmd.Flags().Bool(keyForceOverwrite, false, "Overwrite image file if it exists")
-	buildCmd.Flags().IntP(keySigningKeyIndex, "k", -1, "PGP private key to use (index from 'key list --secret')")
-	buildCmd.Flags().String(keyFingerprint, "", "Fingerprint to sign with")
-	buildCmd.Flags().String(keyKeyring, "", "Full path to secret keyring")
-	buildCmd.Flags().String(keyPassphrase, "", "Passphrase to sign in with")
+	buildCmd.Flags().IntP(keySigningKeyIndex, "k", -1, "PGP private key to use")
+	buildCmd.Flags().String(keyFingerprint, "", "Fingerprint for PGP key to sign with")
+	buildCmd.Flags().String(keyKeyring, "", "Full path to PGP keyring")
+	buildCmd.Flags().String(keyPassphrase, "", "Passphrase for PGP key")
 
 	buildCmd.MarkFlagsMutuallyExclusive(keySigningKeyIndex, keyFingerprint)
 
