@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -20,11 +21,15 @@ import (
 )
 
 const (
-	keyAccessToken    = "auth-token"
-	keySkipTLSVerify  = "skip-verify"
-	keyArch           = "arch"
-	keyFrontendURL    = "url"
-	keyForceOverwrite = "force"
+	keyAccessToken     = "auth-token"
+	keySkipTLSVerify   = "skip-verify"
+	keyArch            = "arch"
+	keyFrontendURL     = "url"
+	keyForceOverwrite  = "force"
+	keySigningKeyIndex = "keyidx"
+	keyFingerprint     = "fingerprint"
+	keyKeyring         = "keyring"
+	keyPassphrase      = "passphrase"
 )
 
 var buildCmd = &cobra.Command{
@@ -53,8 +58,12 @@ var buildCmd = &cobra.Command{
 
       scs-build build alpine.def
 
-  Note: ephemeral artifacts are short-lived and are usually deleted within 24 hours.`,
+  Note: ephemeral artifacts are short-lived and are usually deleted within 24 hours.
+  
+  Using --fingerprint or --keyidx flags will enable automatic PGP signing`,
 }
+
+var errNotSupported = errors.New("build and sign ephemeral image is not supported")
 
 func addBuildCommand(rootCmd *cobra.Command) {
 	buildCmd.Flags().String(keyAccessToken, "", "Access token")
@@ -62,6 +71,13 @@ func addBuildCommand(rootCmd *cobra.Command) {
 	buildCmd.Flags().StringSlice(keyArch, []string{runtime.GOARCH}, "Requested build architecture")
 	buildCmd.Flags().String(keyFrontendURL, "", "Singularity Container Services or Singularity Enterprise URL")
 	buildCmd.Flags().Bool(keyForceOverwrite, false, "Overwrite image file if it exists")
+	buildCmd.Flags().IntP(keySigningKeyIndex, "k", -1, "PGP private key to use")
+	buildCmd.Flags().String(keyFingerprint, "", "Fingerprint for PGP key to sign with")
+	buildCmd.Flags().String(keyKeyring, "", "Full path to PGP keyring")
+	buildCmd.Flags().String(keyPassphrase, "", "Passphrase for PGP key")
+
+	buildCmd.MarkFlagsMutuallyExclusive(keySigningKeyIndex, keyFingerprint)
+
 	rootCmd.AddCommand(buildCmd)
 }
 
@@ -74,17 +90,27 @@ func getConfig(cmd *cobra.Command) (*viper.Viper, error) {
 }
 
 func executeBuildCmd(cmd *cobra.Command, args []string) error {
-	defSpec := args[0]
-
-	var libraryRef string
-	if len(args) > 1 {
-		libraryRef = args[1]
-	}
-
 	// Get command-line/envvars
 	v, err := getConfig(cmd)
 	if err != nil {
 		return fmt.Errorf("error getting config: %w", err)
+	}
+
+	defSpec := args[0]
+
+	if v.GetString(keyPassphrase) != "" && v.GetInt(keySigningKeyIndex) == -1 && v.GetString(keyFingerprint) == "" {
+		return fmt.Errorf("--passphrase only effective when signing enabled")
+	}
+
+	signing := v.GetInt(keySigningKeyIndex) != -1 || v.GetString(keyFingerprint) != "" || v.GetString(keyKeyring) != ""
+
+	var libraryRef string
+	if len(args) > 1 {
+		libraryRef = args[1]
+	} else {
+		if len(args) == 1 && signing {
+			return errNotSupported
+		}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -99,6 +125,11 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		Force:         v.GetBool(keyForceOverwrite),
 		UserAgent:     fmt.Sprintf("scs-build/%v", version),
 		ArchsToBuild:  v.GetStringSlice(keyArch),
+		KeyIdx:        v.GetInt(keySigningKeyIndex),
+		Fingerprint:   v.GetString(keyFingerprint),
+		Keyring:       v.GetString(keyKeyring),
+		Signing:       signing,
+		Passphrase:    v.GetString(keyPassphrase),
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Application init error: %v\n", err)

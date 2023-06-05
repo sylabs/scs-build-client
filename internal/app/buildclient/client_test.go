@@ -157,10 +157,11 @@ func Test_build(t *testing.T) {
 	if err != nil {
 		t.Fatalf("initialization error: %v", err)
 	}
+	_ = app
 
-	if err := app.build(context.Background(), buildSpec{
-		Archs: []string{runtime.GOARCH},
-	}); err != nil {
+	const buildDef = "bootstrap: docker\nfrom: alpine:3\n"
+
+	if err := app.build(context.Background(), []byte(buildDef), "", app.archsToBuild); err != nil {
 		t.Fatalf("build error: %v", err)
 	}
 }

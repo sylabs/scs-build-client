@@ -14,27 +14,68 @@ To build an image, tag it and publish it directly to the Library:
 
 ```sh
 # Singularity Container Services (cloud.sylabs.io)
-docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" \
-    sylabsio/scs-build build recipe.def library:<entity>/default/image:latest
+docker run -e SYLABS_AUTH_TOKEN \
+    -u $(id -u) -v `pwd`:/work \
+    sylabsio/scs-build build /work/recipe.def library:<entity>/default/image:latest
 
 # Singularity Enterprise (replace "cloud.enterprise.local" with your installation host name)
-docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" \
-    sylabsio/scs-build build recipe.def library://cloud.enterprise.local/<entity>/default/image:latest
+docker run -e SYLABS_AUTH_TOKEN \
+    -u $(id -u) -v `pwd`:/work \
+    sylabsio/scs-build build /work/recipe.def library://cloud.enterprise.local/<entity>/default/image:latest
 ```
 
 To build an image and retrieve it:
 
 ```sh
 # Singularity Container Services (cloud.sylabs.io)
-docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" \
+docker run -e SYLABS_AUTH_TOKEN \
     -u $(id -u) -v `pwd`:/work \
     sylabsio/scs-build build /work/recipe.def /work/image.sif
 
 # Singularity Enterprise (replace "cloud.enterprise.local" with your installation host name)
-docker run -e SYLABS_AUTH_TOKEN="${SYLABS_AUTH_TOKEN}" \
+docker run -e SYLABS_AUTH_TOKEN \
     -u $(id -u) -v `pwd`:/work \
     sylabsio/scs-build build --url https://cloud.enterprise.local /work/recipe.def /work/image.sif
 ```
+
+Build an image, sign it using PGP key matching fingerprint, and publish directly to the library:
+
+```sh
+# Singularity Container Services (cloud.sylabs.io)
+docker run -e SYLABS_AUTH_TOKEN \
+    -u $(id -u) -v `pwd`:/work \
+    -v ~/.gnupg:/gnupg:ro \
+    sylabsio/scs-build build /work/recipe.def library://cloud.enterprise.local/<entity>/default/image:latest \
+    --keyring /gnupg/secring.gpg --fingerprint ABABABABABA
+
+# Singularity Enterprise (replace "cloud.enterprise.local" with your installation host name)
+docker run -e SYLABS_AUTH_TOKEN \
+    -u $(id -u) -v `pwd`:/work \
+    -v ~/.gnupg:/gnupg:ro \
+    sylabsio/scs-build build /work/recipe.def library://cloud.enterprise.local/<entity>/default/image:latest \
+    --url https://cloud.enterprise.local \
+    --keyring /gnupg/secring.gpg --fingerprint ABABABABABA
+```
+
+Build an image, sign it using key 1 from the keyring, and retrieve it:
+
+```sh
+# Singularity Container Services (cloud.sylabs.io)
+docker run -e SYLABS_AUTH_TOKEN \
+    -u $(id -u) -v `pwd`:/work \
+    -v ~/.gnupg:/gnupg:ro \
+    sylabsio/scs-build build /work/recipe.def /work/image.sif \
+    --keyring /gnupg/secring.gpg --keyidx 1 \
+
+# Singularity Enterprise (replace "cloud.enterprise.local" with your installation host name)
+docker run -e SYLABS_AUTH_TOKEN \
+    -u $(id -u) -v `pwd`:/work \
+    -v ~/.gnupg:/gnupg:ro \
+    sylabsio/scs-build build --url https://cloud.enterprise.local /work/recipe.def /work/image.sif \
+    --keyring /gnupg/secring.gpg --keyidx 1
+```
+
+Be sure to substitute `<entity>` appropriately (generally your username.)
 
 ## CI/CD Integration
 

@@ -19,13 +19,13 @@ import (
 // buildArtifact sends a build request for the specified arch, optionally publishing it to
 // libraryRef. Output is streamed to standard output. If the build cannot be submitted, or does not
 // succeed, an error is returned.
-func (app *App) buildArtifact(ctx context.Context, arch string, bs buildSpec) (*build.BuildInfo, error) {
-	opts := []build.BuildOption{build.OptBuildArchitecture(arch), build.OptBuildContext(bs.Context)}
-	if bs.LibraryRef != nil {
-		opts = append(opts, build.OptBuildLibraryRef(bs.LibraryRef.String()))
+func (app *App) buildArtifact(ctx context.Context, arch string, def []byte, buildContext string, libraryRef string) (*build.BuildInfo, error) {
+	opts := []build.BuildOption{build.OptBuildArchitecture(arch), build.OptBuildContext(buildContext)}
+	if libraryRef != "" {
+		opts = append(opts, build.OptBuildLibraryRef(libraryRef))
 	}
 
-	bi, err := app.buildClient.Submit(ctx, bytes.NewReader(bs.Def), opts...)
+	bi, err := app.buildClient.Submit(ctx, bytes.NewReader(def), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error submitting remote build: %w", err)
 	}
@@ -42,8 +42,8 @@ func (app *App) buildArtifact(ctx context.Context, arch string, bs buildSpec) (*
 		return nil, errors.New("failed to build image")
 	}
 
-	if bs.Context != "" {
-		_ = app.buildClient.DeleteBuildContext(ctx, bs.Context)
+	if buildContext != "" {
+		_ = app.buildClient.DeleteBuildContext(ctx, buildContext)
 	}
 
 	return bi, nil

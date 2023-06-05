@@ -39,6 +39,27 @@ scs-build build recipe.def library:<entity>/default/image:latest
 scs-build build recipe.def library://cloud.enterprise.local/<entity>/default/image:latest
 ```
 
+Build an image, sign it using PGP key matching fingerprint, and publish directly to the library:
+
+```sh
+# Singularity Container Services (cloud.sylabs.io)
+scs-build build recipe.def library://<entity>/default/image:latest --fingerprint ABABABABABA
+```
+
+Build an image, sign it using key 1 from the keyring, and publish directly to the library:
+
+```sh
+# Singularity Container Services (cloud.sylabs.io)
+scs-build build recipe.def library://<entity>/default/image:latest --keyidx 1
+```
+
+Build an image, sign it using existing Singularity PGP keyring, and publish directly to the library:
+
+```sh
+# Singularity Container Services (cloud.sylabs.io)
+scs-build build recipe.def library://<entity>/default/image:latest --keyring ~/.singularity/sypgp/pgp-secret
+```
+
 Be sure to substitute `<entity>` appropriately (generally your username.)
 
 ## CI/CD Integration
