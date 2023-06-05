@@ -102,7 +102,7 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--passphrase only effective when signing enabled")
 	}
 
-	signing := v.GetInt(keySigningKeyIndex) != -1 || v.GetString(keyFingerprint) != ""
+	signing := v.GetInt(keySigningKeyIndex) != -1 || v.GetString(keyFingerprint) != "" || v.GetString(keyKeyring) != ""
 
 	var libraryRef string
 	if len(args) > 1 {
