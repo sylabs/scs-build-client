@@ -1,4 +1,4 @@
-// Copyright (c) 2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -12,6 +12,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+	"github.com/sylabs/scs-build-client/internal/app/buildclient"
+	"github.com/sylabs/scs-build-client/internal/pkg/useragent"
 )
 
 var rootCmd = &cobra.Command{
@@ -63,7 +65,9 @@ func execute() error {
 	})
 
 	// Add build subcommand
-	addBuildCommand(rootCmd)
+	buildclient.AddBuildCommand(rootCmd)
+
+	useragent.Init(version)
 
 	return rootCmd.Execute()
 }
