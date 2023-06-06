@@ -211,6 +211,12 @@ func (app *App) Run(ctx context.Context) error {
 		return fmt.Errorf("error uploading build context: %w", err)
 	}
 
+	defer func() {
+		if buildContext != "" {
+			_ = app.buildClient.DeleteBuildContext(ctx, buildContext)
+		}
+	}()
+
 	if len(app.archsToBuild) > 1 {
 		fmt.Printf("Performing builds for following architectures: %v\n", strings.Join(app.archsToBuild, " "))
 	}

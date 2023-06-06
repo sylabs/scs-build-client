@@ -45,10 +45,6 @@ func (app *App) buildArtifact(ctx context.Context, arch string, def []byte, buil
 		return nil, errors.New("failed to build image")
 	}
 
-	if buildContext != "" {
-		_ = app.buildClient.DeleteBuildContext(ctx, buildContext)
-	}
-
 	return bi, nil
 }
 
