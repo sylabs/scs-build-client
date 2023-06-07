@@ -19,6 +19,7 @@ import (
 	build "github.com/sylabs/scs-build-client/client"
 	"github.com/sylabs/scs-build-client/internal/pkg/endpoints"
 	library "github.com/sylabs/scs-library-client/client"
+	"github.com/sylabs/sif/v2/pkg/integrity"
 )
 
 const defaultFrontendURL = "https://cloud.sylabs.io"
@@ -33,12 +34,7 @@ type Config struct {
 	Force         bool
 	UserAgent     string
 	ArchsToBuild  []string
-	Key           string
-	KeyIdx        int
-	Fingerprint   string
-	Keyring       string
-	Signing       bool
-	Passphrase    string
+	SignerOpts    []integrity.SignerOpt
 }
 
 // App represents the application instance
@@ -52,12 +48,7 @@ type App struct {
 	buildURL      string
 	skipTLSVerify bool
 	archsToBuild  []string
-	key           string
-	keyIdx        int
-	fingerprint   string
-	keyring       string
-	signing       bool
-	passphrase    string
+	signerOpts    []integrity.SignerOpt
 }
 
 var errNoBuildContextFiles = errors.New("no files referenced in build definition")
@@ -69,12 +60,7 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 		force:         cfg.Force,
 		skipTLSVerify: cfg.SkipTLSVerify,
 		archsToBuild:  cfg.ArchsToBuild,
-		key:           cfg.Key,
-		keyIdx:        cfg.KeyIdx,
-		fingerprint:   cfg.Fingerprint,
-		keyring:       cfg.Keyring,
-		signing:       cfg.Signing,
-		passphrase:    cfg.Passphrase,
+		signerOpts:    cfg.SignerOpts,
 	}
 	var libraryRefHost string
 
@@ -214,7 +200,7 @@ func (app *App) Run(ctx context.Context) error {
 	}
 
 	var err error
-	buildDef, err := app.getBuildDef(app.buildSpec)
+	buildDef, err := getBuildDef(app.buildSpec)
 	if err != nil {
 		return fmt.Errorf("unable to get build definition: %w", err)
 	}
@@ -225,6 +211,12 @@ func (app *App) Run(ctx context.Context) error {
 		return fmt.Errorf("error uploading build context: %w", err)
 	}
 
+	defer func() {
+		if buildContext != "" {
+			_ = app.buildClient.DeleteBuildContext(ctx, buildContext)
+		}
+	}()
+
 	if len(app.archsToBuild) > 1 {
 		fmt.Printf("Performing builds for following architectures: %v\n", strings.Join(app.archsToBuild, " "))
 	}
@@ -232,48 +224,14 @@ func (app *App) Run(ctx context.Context) error {
 	return app.build(ctx, buildDef, buildContext, app.archsToBuild)
 }
 
-func (app *App) initSigner(enable bool) (*signer, error) {
-	if !enable {
-		// Signing is disabled
-		return nil, nil //nolint:nilnil
-	}
-
-	fmt.Printf("Build artifacts will be automatically signed\n")
-
-	var so []signerOpt
-
-	path, err := keyringPath(app.keyring)
-	if err != nil {
-		return nil, err
-	}
-	so = append(so, signKeyringFile(path))
-
-	if keyringFingerprint := app.fingerprint; keyringFingerprint != "" {
-		so = append(so, signKeyringFingerprint(keyringFingerprint))
-	} else if app.keyIdx != -1 {
-		so = append(so, signKeyringKeyIdx(app.keyIdx))
-	} else {
-		so = append(so, signEntitySelector(keyringEntitySelectorFunc))
-	}
-
-	if app.passphrase != "" {
-		so = append(so, signKeyringPassphrase(app.passphrase))
-	} else {
-		so = append(so, signKeyringPassphraseFunc(keyringPassphraseFunc))
-	}
-
-	return newSigner(so...)
-}
-
 func (app *App) build(ctx context.Context, Def []byte, Context string, Archs []string) error {
 	errs := make(map[string]error)
 
-	s, err := app.initSigner(app.signing)
-	if err != nil {
-		return fmt.Errorf("error initializing signer: %w", err)
-	}
+	signed := app.signerOpts != nil
 
 	for _, arch := range Archs {
+		fmt.Printf("Building for %v...\n", arch)
+
 		dstFileName := appendFileSuffix(app.dstFileName, arch, len(Archs) > 1)
 
 		var libraryRef string
@@ -281,15 +239,11 @@ func (app *App) build(ctx context.Context, Def []byte, Context string, Archs []s
 			libraryRef = app.LibraryRef.String()
 		}
 
-		fmt.Printf("Building for %v...\n", arch)
-
-		bi, err := app.buildArch(ctx, arch, Def, Context, libraryRef, dstFileName, s)
+		bi, err := app.buildArch(ctx, arch, Def, Context, libraryRef, dstFileName)
 		if err != nil {
 			errs[arch] = err
 			continue
 		}
-
-		signed := s != nil
 
 		if !signed && dstFileName == "" {
 			// Library ref specified; image pushed to library automatically
@@ -319,8 +273,8 @@ func (app *App) directLibraryUpload(filename string) bool {
 	return app.LibraryRef != nil || filename == ""
 }
 
-func (app *App) buildArch(ctx context.Context, arch string, def []byte, buildContext string, libraryRef string, dstFileName string, s *signer) (*build.BuildInfo, error) {
-	signed := s != nil
+func (app *App) buildArch(ctx context.Context, arch string, def []byte, buildContext string, libraryRef string, dstFileName string) (*build.BuildInfo, error) {
+	signed := app.signerOpts != nil
 
 	var tmpFileName string
 	var tmpLibraryRef string
@@ -366,7 +320,7 @@ func (app *App) buildArch(ctx context.Context, arch string, def []byte, buildCon
 
 	if signed {
 		// Sign local file
-		if err := app.sign(ctx, s, tmpFileName); err != nil {
+		if err := app.sign(ctx, tmpFileName); err != nil {
 			return nil, err
 		}
 
@@ -386,13 +340,10 @@ func (app *App) buildArch(ctx context.Context, arch string, def []byte, buildCon
 	return bi, nil
 }
 
-func (app *App) sign(ctx context.Context, s *signer, fileName string) error {
+func (app *App) sign(_ context.Context, fileName string) error {
 	fmt.Printf("Signing...\n")
 
-	if err := s.Sign(ctx, fileName); err != nil {
-		return fmt.Errorf("signing error: %w", err)
-	}
-	return nil
+	return sign(fileName, app.signerOpts...)
 }
 
 func (app *App) uploadImage(ctx context.Context, tmpFileName, arch string) error {

@@ -6,75 +6,192 @@
 package buildclient
 
 import (
-	"bytes"
 	"context"
+	"crypto"
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
+	"runtime"
 	"strings"
+	"syscall"
 
-	build "github.com/sylabs/scs-build-client/client"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	"github.com/sigstore/sigstore/pkg/signature"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/sylabs/scs-build-client/internal/pkg/useragent"
+	"github.com/sylabs/sif/v2/pkg/integrity"
 )
 
-// buildArtifact sends a build request for the specified arch, optionally publishing it to
-// libraryRef. Output is streamed to standard output. If the build cannot be submitted, or does not
-// succeed, an error is returned.
-func (app *App) buildArtifact(ctx context.Context, arch string, def []byte, buildContext string, libraryRef string) (*build.BuildInfo, error) {
-	opts := []build.BuildOption{build.OptBuildArchitecture(arch), build.OptBuildContext(buildContext)}
-	if libraryRef != "" {
-		opts = append(opts, build.OptBuildLibraryRef(libraryRef))
-	}
+const (
+	keyAccessToken       = "auth-token"
+	keySkipTLSVerify     = "skip-verify"
+	keyArch              = "arch"
+	keyFrontendURL       = "url"
+	keyForceOverwrite    = "force"
+	keySign              = "sign"
+	keySigningKeyIndex   = "keyidx"
+	keyFingerprint       = "fingerprint"
+	keyKeyring           = "keyring"
+	keyPassphrase        = "passphrase"
+	keyPrivateSigningKey = "key"
+)
 
-	bi, err := app.buildClient.Submit(ctx, bytes.NewReader(def), opts...)
+var buildCmd = &cobra.Command{
+	Use:   "build [flags] <build spec> <image path>",
+	Short: "Perform remote build on Singularity Container Services (https://cloud.sylabs.io) or Singularity Enterprise",
+	Args:  cobra.MinimumNArgs(1),
+	RunE:  executeBuildCmd,
+	Example: `
+  Build and push artifact to cloud library:
+
+      scs-build build alpine.def library:user/project/image:tag
+
+  Build and push artifact to Singularity Enterprise:
+
+      scs-build build alpine.def library://cloud.enterprise.local/user/project/image:tag
+
+  Build local artifact:
+
+      scs-build build docker://alpine alpine_latest.sif
+
+  Build local artifact on Singularity Enterprise:
+
+      scs-build build --url https://cloud.enterprise.local --skip-verify docker://alpine alpine_latest.sif
+
+  Build ephemeral artifact:
+
+      scs-build build alpine.def
+
+  Note: ephemeral artifacts are short-lived and are usually deleted within 24 hours.
+
+  Using --sign will enable automatic PGP signing. Use '--sign --key FILE' to sign with private key.`,
+}
+
+var errSigningNotSupported = errors.New("build and sign ephemeral image is not supported")
+
+func AddBuildCommand(rootCmd *cobra.Command) {
+	buildCmd.Flags().String(keyAccessToken, "", "Access token")
+	buildCmd.Flags().Bool(keySkipTLSVerify, false, "Skip SSL/TLS certificate verification")
+	buildCmd.Flags().StringSlice(keyArch, []string{runtime.GOARCH}, "Requested build architecture")
+	buildCmd.Flags().String(keyFrontendURL, "", "Singularity Container Services or Singularity Enterprise URL")
+	buildCmd.Flags().Bool(keyForceOverwrite, false, "Overwrite image file if it exists")
+	buildCmd.Flags().Bool(keySign, false, "Automatically sign image after build")
+	buildCmd.Flags().IntP(keySigningKeyIndex, "k", -1, "PGP private key to use")
+	buildCmd.Flags().String(keyFingerprint, "", "Fingerprint for PGP key to sign with")
+	buildCmd.Flags().String(keyKeyring, "", "Full path to PGP keyring")
+	buildCmd.Flags().String(keyPassphrase, "", "Passphrase for PGP key")
+	buildCmd.Flags().String(keyPrivateSigningKey, "", "Private key for signing")
+
+	buildCmd.MarkFlagsMutuallyExclusive(keySigningKeyIndex, keyFingerprint, keyPrivateSigningKey)
+	buildCmd.MarkFlagsMutuallyExclusive(keyKeyring, keyPrivateSigningKey)
+	buildCmd.MarkFlagsMutuallyExclusive(keyPassphrase, keyPrivateSigningKey)
+	buildCmd.MarkFlagsMutuallyExclusive(keyFingerprint, keyPrivateSigningKey)
+
+	rootCmd.AddCommand(buildCmd)
+}
+
+func getConfig(cmd *cobra.Command) (*viper.Viper, error) {
+	v := viper.New()
+	v.SetEnvPrefix("sylabs")
+	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	return v, v.BindPFlags(cmd.Flags())
+}
+
+func executeBuildCmd(cmd *cobra.Command, args []string) error {
+	// Get command-line/envvars
+	v, err := getConfig(cmd)
 	if err != nil {
-		return nil, fmt.Errorf("error submitting remote build: %w", err)
-	}
-	if err := app.buildClient.GetOutput(ctx, bi.ID(), os.Stdout); err != nil {
-		return nil, fmt.Errorf("error streaming remote build output: %w", err)
-	}
-	if bi, err = app.buildClient.GetStatus(ctx, bi.ID()); err != nil {
-		return nil, fmt.Errorf("error getting remote build status: %w", err)
+		return fmt.Errorf("error getting config: %w", err)
 	}
 
-	// The returned info doesn't indicate an exit code, but a zero-sized image tells us something
-	// went wrong.
-	if bi.ImageSize() <= 0 {
-		return nil, errors.New("failed to build image")
+	if v.GetString(keyPassphrase) != "" && !(cmd.Flag(keySigningKeyIndex).Changed || cmd.Flag(keyFingerprint).Changed) {
+		return fmt.Errorf("--passphrase only effective when PGP signing enabled")
 	}
 
-	if buildContext != "" {
-		_ = app.buildClient.DeleteBuildContext(ctx, buildContext)
+	defSpec := args[0]
+
+	signing := v.GetString(keyPassphrase) != "" ||
+		v.GetInt(keySigningKeyIndex) != -1 ||
+		v.GetString(keyFingerprint) != "" ||
+		v.GetBool(keySign)
+
+	var signerOpts []integrity.SignerOpt
+	if signing {
+		fmt.Printf("Build artifacts will be automatically signed\n")
+
+		signerOpts, err = parseSigningOpts(v)
+		if err != nil {
+			return fmt.Errorf("error parsing signing opts: %w", err)
+		}
 	}
 
-	return bi, nil
-}
-
-// definitionFromURI attempts to parse a URI from raw. If raw contains a URI, a definition file
-// representing it is returned, and ok is set to true. Otherwise, ok is set to false.
-func definitionFromURI(raw string) (def []byte, ok bool) {
-	var u []string
-	if strings.Contains(raw, "://") {
-		u = strings.SplitN(raw, "://", 2)
-	} else if strings.Contains(raw, ":") {
-		u = strings.SplitN(raw, ":", 2)
+	var libraryRef string
+	if len(args) > 1 {
+		libraryRef = args[1]
 	} else {
-		return nil, false
+		if len(args) == 1 && signing {
+			return errSigningNotSupported
+		}
 	}
 
-	var b bytes.Buffer
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	fmt.Fprintln(&b, "bootstrap:", u[0])
-	fmt.Fprintln(&b, "from:", u[1])
+	app, err := New(ctx, &Config{
+		URL:           v.GetString(keyFrontendURL),
+		AuthToken:     v.GetString(keyAccessToken),
+		DefFileName:   defSpec,
+		LibraryRef:    libraryRef,
+		SkipTLSVerify: v.GetBool(keySkipTLSVerify),
+		Force:         v.GetBool(keyForceOverwrite),
+		UserAgent:     useragent.Value(),
+		ArchsToBuild:  v.GetStringSlice(keyArch),
+		SignerOpts:    signerOpts,
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Application init error: %v\n", err)
+		return fmt.Errorf("application init error: %w", err)
+	}
 
-	return b.Bytes(), true
+	// set up signal handler
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		fmt.Fprintf(os.Stderr, "Shutting down due to signal: %v\n", <-c)
+		cancel()
+	}()
+
+	return app.Run(ctx)
 }
 
-func (app *App) getBuildDef(uri string) ([]byte, error) {
-	// Build spec could be a URI, or the path to a definition file.
-	if b, ok := definitionFromURI(uri); ok {
-		return b, nil
+func parseSigningOpts(v *viper.Viper) ([]integrity.SignerOpt, error) {
+	// Parse flags to determine signing configuration
+	opts := []integrity.SignerOpt{}
+
+	if privateSigningKey := v.GetString(keyPrivateSigningKey); privateSigningKey != "" {
+		// Use private key for signing
+		ss, err := signature.LoadSignerFromPEMFile(privateSigningKey, crypto.SHA256, cryptoutils.GetPasswordFromStdIn)
+		if err != nil {
+			return nil, fmt.Errorf("error initializing private key signer: %w", err)
+		}
+
+		return append(opts, integrity.OptSignWithSigner(ss)), nil
 	}
 
-	// Attempt to read app.buildSpec as a file
-	return os.ReadFile(uri)
+	// Fallback to PGP signing
+	s, err := parsePGPSignerOpts(v)
+	if err != nil {
+		return nil, err
+	}
+
+	pgpSignerOpts, err := getPGPSignerOpts(s...)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(opts, pgpSignerOpts...), nil
 }
