@@ -76,7 +76,7 @@ func keyringPath(keyring string) (string, error) {
 }
 
 func keyringPassphraseFunc() ([]byte, error) {
-	fmt.Print("Keyring passphase: ")
+	fmt.Print("Keyring passphrase: ")
 	bytePassword, err := term.ReadPassword(0)
 
 	// Add missing newline after passphrase prompt
