@@ -10,6 +10,7 @@ import (
 	"crypto"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"os/signal"
 	"runtime"
@@ -111,8 +112,6 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--passphrase only effective when PGP signing enabled")
 	}
 
-	defSpec := args[0]
-
 	signing := v.GetString(keyPassphrase) != "" ||
 		v.GetInt(keySigningKeyIndex) != -1 ||
 		v.GetString(keyFingerprint) != "" ||
@@ -137,13 +136,18 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	buildSpec, err := parseBuildSpec(args[0])
+	if err != nil {
+		return err
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	app, err := New(ctx, &Config{
 		URL:           v.GetString(keyFrontendURL),
 		AuthToken:     v.GetString(keyAccessToken),
-		DefFileName:   defSpec,
+		BuildSpec:     buildSpec,
 		LibraryRef:    libraryRef,
 		SkipTLSVerify: v.GetBool(keySkipTLSVerify),
 		Force:         v.GetBool(keyForceOverwrite),
@@ -152,7 +156,6 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		SignerOpts:    signerOpts,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Application init error: %v\n", err)
 		return fmt.Errorf("application init error: %w", err)
 	}
 
@@ -166,6 +169,26 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 	}()
 
 	return app.Run(ctx)
+}
+
+var errInvalidBuildSpec = errors.New("invalid build spec")
+
+// parseBuildSpec validates buildspec argument.
+func parseBuildSpec(buildSpec string) (string, error) {
+	u, err := url.Parse(buildSpec)
+	if err != nil {
+		return buildSpec, nil
+	}
+
+	if u.Scheme == "file" {
+		return strings.TrimPrefix(buildSpec, "file://"), nil
+	}
+
+	if u.Scheme != "" && u.Scheme != "docker" {
+		return "", errInvalidBuildSpec
+	}
+
+	return buildSpec, nil
 }
 
 func parseSigningOpts(v *viper.Viper) ([]integrity.SignerOpt, error) {
