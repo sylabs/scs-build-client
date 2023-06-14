@@ -3,7 +3,7 @@ module github.com/sylabs/scs-build-client
 go 1.17
 
 require (
-	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8
+	github.com/ProtonMail/go-crypto v0.0.0-20230528122434-6f98819771a1
 	github.com/gorilla/websocket v1.5.0
 	github.com/sebdah/goldie/v2 v2.5.3
 	github.com/sigstore/sigstore v1.6.5
@@ -12,7 +12,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/sylabs/json-resp v0.8.2
 	github.com/sylabs/scs-library-client v1.4.5
-	github.com/sylabs/sif/v2 v2.11.4
+	github.com/sylabs/sif/v2 v2.11.5
 	golang.org/x/term v0.9.0
 )
 
