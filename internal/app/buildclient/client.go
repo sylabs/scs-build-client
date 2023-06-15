@@ -28,7 +28,7 @@ const defaultFrontendURL = "https://cloud.sylabs.io"
 type Config struct {
 	URL           string
 	AuthToken     string
-	DefFileName   string
+	BuildSpec     string
 	SkipTLSVerify bool
 	LibraryRef    string
 	Force         bool
@@ -42,7 +42,7 @@ type App struct {
 	buildClient   *build.Client
 	libraryClient *library.Client
 	buildSpec     string
-	LibraryRef    *library.Ref
+	libraryRef    *library.Ref
 	dstFileName   string
 	force         bool
 	buildURL      string
@@ -51,48 +51,29 @@ type App struct {
 	signerOpts    []integrity.SignerOpt
 }
 
-var errNoBuildContextFiles = errors.New("no files referenced in build definition")
+var (
+	errNoBuildContextFiles = errors.New("no files referenced in build definition")
+	errMalformedLibraryRef = errors.New("malformed library ref")
+)
 
 // New creates new application instance
 func New(ctx context.Context, cfg *Config) (*App, error) {
+	p, err := parseLibraryrefArg(cfg.LibraryRef)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing library ref: %w", err)
+	}
+
 	app := &App{
-		buildSpec:     cfg.DefFileName,
+		buildSpec:     cfg.BuildSpec,
 		force:         cfg.Force,
 		skipTLSVerify: cfg.SkipTLSVerify,
 		archsToBuild:  cfg.ArchsToBuild,
 		signerOpts:    cfg.SignerOpts,
-	}
-	var libraryRefHost string
-
-	// Parse/validate image spec (local file or library ref)
-	if strings.HasPrefix(cfg.LibraryRef, library.Scheme+":") {
-		ref, err := library.ParseAmbiguous(cfg.LibraryRef)
-		if err != nil {
-			return nil, fmt.Errorf("malformed library ref: %w", err)
-		}
-
-		if ref.Host != "" {
-			// Ref contains a host. Note this to determine the front end URL, but don't include it
-			// in the LibraryRef, since the Build Service expects a hostless format.
-			libraryRefHost = ref.Host
-			ref.Host = ""
-		}
-
-		app.LibraryRef = ref
-	} else if cfg.LibraryRef != "" {
-		// Parse as URL
-		ref, err := url.Parse(cfg.LibraryRef)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing %v as URL: %w", cfg.LibraryRef, err)
-		}
-		if ref.Scheme != "file" && ref.Scheme != "" {
-			return nil, fmt.Errorf("unsupported library ref scheme %v", ref.Scheme)
-		}
-		app.dstFileName = ref.Path
+		dstFileName:   p.FileName(),
 	}
 
 	// Determine frontend URL either from library ref, if provided or url, if provided, or default.
-	feURL, err := getFrontendURL(cfg.URL, libraryRefHost)
+	feURL, err := getFrontendURL(cfg.URL, p.Host())
 	if err != nil {
 		return nil, err
 	}
@@ -235,8 +216,8 @@ func (app *App) build(ctx context.Context, Def []byte, Context string, Archs []s
 		dstFileName := appendFileSuffix(app.dstFileName, arch, len(Archs) > 1)
 
 		var libraryRef string
-		if app.LibraryRef != nil {
-			libraryRef = app.LibraryRef.String()
+		if app.libraryRef != nil {
+			libraryRef = app.libraryRef.String()
 		}
 
 		bi, err := app.buildArch(ctx, arch, Def, Context, libraryRef, dstFileName)
@@ -247,7 +228,7 @@ func (app *App) build(ctx context.Context, Def []byte, Context string, Archs []s
 
 		if !signed && dstFileName == "" {
 			// Library ref specified; image pushed to library automatically
-			if app.LibraryRef == nil {
+			if app.libraryRef == nil {
 				fmt.Printf("Build artifact %v is available for 24 hours or less\n", bi.LibraryRef())
 			}
 			continue
@@ -270,7 +251,7 @@ func (app *App) build(ctx context.Context, Def []byte, Context string, Archs []s
 }
 
 func (app *App) directLibraryUpload(filename string) bool {
-	return app.LibraryRef != nil || filename == ""
+	return app.libraryRef != nil || filename == ""
 }
 
 func (app *App) buildArch(ctx context.Context, arch string, def []byte, buildContext string, libraryRef string, dstFileName string) (*build.BuildInfo, error) {
@@ -355,8 +336,8 @@ func (app *App) uploadImage(ctx context.Context, tmpFileName, arch string) error
 		_ = fp.Close()
 	}()
 
-	if _, err := app.libraryClient.UploadImage(ctx, fp, app.LibraryRef.Path, arch, app.LibraryRef.Tags, "", nil); err != nil {
-		return fmt.Errorf("error uploading image %v to %v: %w", tmpFileName, app.LibraryRef.String(), err)
+	if _, err := app.libraryClient.UploadImage(ctx, fp, app.libraryRef.Path, arch, app.libraryRef.Tags, "", nil); err != nil {
+		return fmt.Errorf("error uploading image %v to %v: %w", tmpFileName, app.libraryRef.String(), err)
 	}
 
 	// Remove temporary file
