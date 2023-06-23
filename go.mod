@@ -6,7 +6,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230528122434-6f98819771a1
 	github.com/gorilla/websocket v1.5.0
 	github.com/sebdah/goldie/v2 v2.5.3
-	github.com/sigstore/sigstore v1.7.0
+	github.com/sigstore/sigstore v1.7.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
