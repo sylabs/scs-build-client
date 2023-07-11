@@ -1411,8 +1411,9 @@ github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcU
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/subosito/gotenv v1.4.2 h1:X1TuBLAMDFbaTAChgCBLu3DU3UPyELpnF2jjJ2cz/S8=
 github.com/subosito/gotenv v1.4.2/go.mod h1:ayKnFf/c6rvx/2iiLrJUk1e6plDbT3edrFNGqEflhK0=
-github.com/sylabs/json-resp v0.8.2 h1:k2dgtMXL+nztYtxrI24Zck/sfexyly4D1+X504eZTKQ=
 github.com/sylabs/json-resp v0.8.2/go.mod h1:Q9X4wRlZNPv3x76KaL8vTCBO4aC/DP2gh13xdtEqd1g=
+github.com/sylabs/json-resp v0.9.0 h1:hj2NIT1c65bTTiu+/3ORoQ1miZuYyXr+TapHxa+rNDo=
+github.com/sylabs/json-resp v0.9.0/go.mod h1:Q9X4wRlZNPv3x76KaL8vTCBO4aC/DP2gh13xdtEqd1g=
 github.com/sylabs/scs-library-client v1.4.5 h1:X/WPO+U+hVVmp2jioGM4AWXaPo3ECAJQQlWxZmKJReE=
 github.com/sylabs/scs-library-client v1.4.5/go.mod h1:nCAsuxBKCNGHKCrMae0EuySFEJgYFSRgqq4X/c7kI2g=
 github.com/sylabs/sif/v2 v2.9.0/go.mod h1:bRdFzcqif0eDjwx0isG4cgTFoKTQn/vfBXVSoP2rB2Y=
