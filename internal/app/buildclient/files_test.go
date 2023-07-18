@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2023, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -8,6 +8,7 @@ package buildclient
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,6 +19,56 @@ import (
 )
 
 var defFileData = []byte(`{"data":{"header":{"bootstrap":"docker","from":"alpine"},"imageData":{"metadata":null,"labels":{},"imageScripts":{"help":{"args":"","script":""},"environment":{"args":"","script":""},"runScript":{"args":"","script":""},"test":{"args":"","script":""},"startScript":{"args":"","script":""}}},"buildData":{"files":[{"args":"","files":[{"source":"./file.txt","destination":"/testfile.txt"},{"source":"anotherfile.txt","destination":"/anotherfile.txt"},{"source":"/a/b/c/d/*.txt","destination":"/e/"},{"source":"../z","destination":"/z/"}]}],"buildScripts":{"pre":{"args":"","script":""},"setup":{"args":"","script":""},"post":{"args":"","script":""},"test":{"args":"","script":""}}},"customData":null,"raw":"Qm9vdHN0cmFwOiBkb2NrZXIKRnJvbTogYWxwaW5lCgolZmlsZXMKICAuL2ZpbGUudHh0IC90ZXN0ZmlsZS50eHQKICBhbm90aGVyZmlsZS50eHQgL2Fub3RoZXJmaWxlLnR4dAogIC9hL2IvYy9kLyoudHh0IC9lLwogIC4uL3ogL3ovCg==","appOrder":[]}}`)
+
+func Test_Stage(t *testing.T) {
+	tests := []struct {
+		name string
+		args string
+		want string
+	}{
+		{"basic", "test", ""},
+		{"escapeArgs", "\nfirst\nsecond", "second"},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			f := files{Args: tt.args}
+
+			if got, want := f.Stage(), tt.want; got != want {
+				t.Fatalf("got: %v, want: %v", got, want)
+			}
+		})
+	}
+}
+
+func Test_SourcePath(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+	}{
+		{"basic", "test"},
+		{"slash", "/"},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			ft := FileTransport{Src: tt.source}
+			got, err := ft.SourcePath()
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			log.Println(got)
+
+			if tt.source == "/" && got != "." {
+				t.Fatalf("Unexpected results: %v", got)
+			}
+		})
+	}
+}
 
 func TestExtractFiles(t *testing.T) {
 	// Create test build server
