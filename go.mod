@@ -1,6 +1,6 @@
 module github.com/sylabs/scs-build-client
 
-go 1.17
+go 1.18
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230528122434-6f98819771a1
