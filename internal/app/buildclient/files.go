@@ -100,13 +100,12 @@ func (app *App) parseDefinition(ctx context.Context, r io.Reader) (definition, e
 	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 { // non-2xx status code
-		err = fmt.Errorf("build server error (HTTP status %d)", res.StatusCode)
-		return definition{}, err
+		return definition{}, fmt.Errorf("build server error (HTTP status %d)", res.StatusCode)
 	}
 
 	var d definition
-	if err = jsonresp.ReadResponse(res.Body, &d); err != nil {
-		err = fmt.Errorf("%w", err)
+	if err := jsonresp.ReadResponse(res.Body, &d); err != nil {
+		return definition{}, err
 	}
 	return d, err
 }
