@@ -79,33 +79,32 @@ func (d definition) SourceFiles() (result []string) {
 
 // parseDefinition calls /v1/convert-def-file API to parse definition file (read from 'r'),
 // returns parsed definition
-func (app *App) parseDefinition(ctx context.Context, r io.Reader) (d definition, err error) {
+func (app *App) parseDefinition(ctx context.Context, r io.Reader) (definition, error) {
 	tr := http.DefaultTransport.(*http.Transport).Clone()
 	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: app.skipTLSVerify}
 	httpClient := &http.Client{Transport: tr}
 
 	loc := fmt.Sprintf("%v/%v", strings.TrimSuffix(app.buildURL, "/"), "v1/convert-def-file")
 
-	var req *http.Request
-	if req, err = http.NewRequestWithContext(ctx, http.MethodPost, loc, r); err != nil {
-		err = fmt.Errorf("%w", err)
-		return
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, loc, r)
+	if err != nil {
+		return definition{}, err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", app.libraryClient.AuthToken))
 
-	var res *http.Response
-	if res, err = httpClient.Do(req); err != nil {
-		err = fmt.Errorf("%w", err)
-		return
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return definition{}, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 { // non-2xx status code
 		err = fmt.Errorf("build server error (HTTP status %d)", res.StatusCode)
-		return
+		return definition{}, err
 	}
 
+	d := definition{}
 	if err = jsonresp.ReadResponse(res.Body, &d); err != nil {
 		err = fmt.Errorf("%w", err)
 	}
