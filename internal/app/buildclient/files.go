@@ -104,7 +104,7 @@ func (app *App) parseDefinition(ctx context.Context, r io.Reader) (definition, e
 		return definition{}, err
 	}
 
-	d := definition{}
+	var d definition
 	if err = jsonresp.ReadResponse(res.Body, &d); err != nil {
 		err = fmt.Errorf("%w", err)
 	}
