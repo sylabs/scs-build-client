@@ -51,29 +51,49 @@ type App struct {
 	signerOpts    []integrity.SignerOpt
 }
 
-var (
-	errNoBuildContextFiles = errors.New("no files referenced in build definition")
-	errMalformedLibraryRef = errors.New("malformed library ref")
-)
+var errNoBuildContextFiles = errors.New("no files referenced in build definition")
 
 // New creates new application instance
 func New(ctx context.Context, cfg *Config) (*App, error) {
-	p, err := parseLibraryrefArg(cfg.LibraryRef)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing library ref: %w", err)
-	}
-
 	app := &App{
 		buildSpec:     cfg.BuildSpec,
 		force:         cfg.Force,
 		skipTLSVerify: cfg.SkipTLSVerify,
 		archsToBuild:  cfg.ArchsToBuild,
 		signerOpts:    cfg.SignerOpts,
-		dstFileName:   p.FileName(),
+	}
+
+	var libraryRefHost string
+
+	// Parse/validate image spec (local file or library ref)
+	if strings.HasPrefix(cfg.LibraryRef, library.Scheme+":") {
+		ref, err := library.ParseAmbiguous(cfg.LibraryRef)
+		if err != nil {
+			return nil, fmt.Errorf("malformed library ref: %w", err)
+		}
+
+		if ref.Host != "" {
+			// Ref contains a host. Note this to determine the front end URL, but don't include it
+			// in the LibraryRef, since the Build Service expects a hostless format.
+			libraryRefHost = ref.Host
+			ref.Host = ""
+		}
+
+		app.libraryRef = ref
+	} else if cfg.LibraryRef != "" {
+		// Parse as URL
+		ref, err := url.Parse(cfg.LibraryRef)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing %v as URL: %w", cfg.LibraryRef, err)
+		}
+		if ref.Scheme != "file" && ref.Scheme != "" {
+			return nil, fmt.Errorf("unsupported library ref scheme %v", ref.Scheme)
+		}
+		app.dstFileName = ref.Path
 	}
 
 	// Determine frontend URL either from library ref, if provided or url, if provided, or default.
-	feURL, err := getFrontendURL(cfg.URL, p.Host())
+	feURL, err := getFrontendURL(cfg.URL, libraryRefHost)
 	if err != nil {
 		return nil, err
 	}
