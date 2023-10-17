@@ -20,6 +20,108 @@ import (
 	"github.com/sylabs/scs-build-client/internal/pkg/endpoints"
 )
 
+const (
+	defaultFEHost   = "cloud.sylabs.io"
+	defaultBuildURI = "https://build.sylabs.io"
+	testLibraryURI  = "http://library.domain"
+	testBuildURI    = "http://build.domain"
+)
+
+func newTestFEServer(t *testing.T) *httptest.Server {
+	t.Helper()
+
+	router := http.NewServeMux()
+	router.Handle("/assets/config/config.prod.json", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewEncoder(w).Encode(&endpoints.FrontendConfig{
+			LibraryAPI: endpoints.URI{URI: testLibraryURI},
+			BuildAPI:   endpoints.URI{URI: testBuildURI},
+		}); err != nil {
+			t.Fatalf("Error writing JSON encoded response: %v", err)
+		}
+	}))
+
+	return httptest.NewTLSServer(router)
+}
+
+func TestNew(t *testing.T) {
+	const dockerBuildSpec = "docker://alpine:3"
+	const localSIFFileName = "alpine_3.sif"
+	const defFile = "alpine.def"
+
+	const libraryPath = "entity/collection/container"
+	const tag = "tag"
+
+	testLibraryRef := fmt.Sprintf("library:///%v:%v", libraryPath, tag)
+	_ = testLibraryRef
+
+	testFeSrv := newTestFEServer(t)
+	defer testFeSrv.Close()
+
+	testLibraryRefWithHost := fmt.Sprintf("library://%v/%v:%v", defaultFEHost, libraryPath, tag)
+	_ = testLibraryRefWithHost
+
+	for _, tt := range []struct {
+		name        string
+		buildSpec   string
+		libraryRef  string
+		uriOverride string
+		expectError bool
+	}{
+		{"DstLocalFile", dockerBuildSpec, localSIFFileName, "", false},
+		{"ReversedArgsLocalFile", localSIFFileName, dockerBuildSpec, "", true},
+		{"LibraryRef", dockerBuildSpec, testLibraryRef, "", false},
+		{"LibraryRefWithHost", dockerBuildSpec, testLibraryRefWithHost, "", false},
+		{"LocalSpec", defFile, localSIFFileName, "", false},
+		{"LocalSpecLibraryRef", defFile, testLibraryRef, "", false},
+		{"LibraryRefWithUser", defFile, "library://user@host/" + libraryPath, "", true},
+		{"LibraryRefMismatch", defFile, testLibraryRefWithHost, testFeSrv.URL, true},
+		{"LibraryRefInvalidScheme", defFile, "filex://" + libraryPath, "", true},
+		{"MalformedLibraryRef", defFile, "other://user@@@```@@////" + libraryPath, "", true},
+		{"InvalidFrontendURI", defFile, testLibraryRef, "http://localhost:88888", true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{
+				BuildSpec:  tt.buildSpec,
+				LibraryRef: tt.libraryRef,
+			}
+
+			if tt.uriOverride != "" {
+				cfg.URL = tt.uriOverride
+			}
+
+			// Initialize build client.
+			b, err := New(context.Background(), cfg)
+
+			// Check if error was expected...
+			if (err != nil) != tt.expectError {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			if err != nil {
+				// Received expected error.
+				return
+			}
+
+			if tt.buildSpec == dockerBuildSpec {
+				assert.Equal(t, dockerBuildSpec, b.buildSpec)
+			}
+			if tt.libraryRef == localSIFFileName {
+				assert.Equal(t, localSIFFileName, b.dstFileName)
+				assert.Nil(t, b.libraryRef)
+			} else {
+				if assert.NotNil(t, b.libraryRef) {
+					assert.Equal(t, libraryPath, b.libraryRef.Path)
+				}
+			}
+
+			if tt.uriOverride != "" {
+				assert.Equal(t, tt.uriOverride, b.buildURL)
+			} else {
+				assert.Equal(t, defaultBuildURI, b.buildURL)
+			}
+		})
+	}
+}
+
 func TestGetFrontendURL(t *testing.T) {
 	tests := []struct {
 		name           string
