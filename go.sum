@@ -201,8 +201,8 @@ github.com/secure-systems-lab/go-securesystemslib v0.7.0/go.mod h1:/2gYnlnHVQ6xe
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
 github.com/sergi/go-diff v1.2.0 h1:XU+rvMAioB0UC3q1MFrIQy4Vo5/4VsRDQQXHsEya6xQ=
 github.com/sergi/go-diff v1.2.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
-github.com/sigstore/sigstore v1.7.4 h1:Fyqn6OKOVsYnV0Vs6JhG5t+q0u7Gj6R5dJ52kUVteLs=
-github.com/sigstore/sigstore v1.7.4/go.mod h1:5MxR9PrWYGk5I3sXgdnrMUOLbwFPuAUNtWPm3VwOjkc=
+github.com/sigstore/sigstore v1.7.5 h1:ij55dBhLwjICmLTBJZm7SqoQLdsu/oowDanACcJNs48=
+github.com/sigstore/sigstore v1.7.5/go.mod h1:9OCmYWhzuq/G4e1cy9m297tuMRJ1LExyrXY3ZC3Zt/s=
 github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9ySo=
 github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
 github.com/spf13/afero v1.10.0 h1:EaGW2JJh15aKOejeuJ+wpFSHnbd7GE6Wvp3TsNhb6LY=
@@ -234,8 +234,6 @@ github.com/sylabs/scs-library-client v1.3.5 h1:OTpqcQLM3zsZWr2zzqjDfDjXreH2UPbfr
 github.com/sylabs/scs-library-client v1.3.5/go.mod h1:PBd6LqmOhliHhTfzp3mVrJv3QVQFre8bMr6j2tDnu/c=
 github.com/sylabs/sif/v2 v2.15.0 h1:Nv0tzksFnoQiQ2eUwpAis9nVqEu4c3RcNSxX8P3Cecw=
 github.com/sylabs/sif/v2 v2.15.0/go.mod h1:X1H7eaPz6BAxA84POMESXoXfTqgAnLQkujyF/CQFWTc=
-github.com/theupdateframework/go-tuf v0.5.2 h1:habfDzTmpbzBLIFGWa2ZpVhYvFBoK0C1onC3a4zuPRA=
-github.com/theupdateframework/go-tuf v0.5.2/go.mod h1:SyMV5kg5n4uEclsyxXJZI2UxPFJNDc4Y+r7wv+MlvTA=
 github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 h1:e/5i7d4oYZ+C1wj2THlRK+oAhjeS/TRQwMfkIuet3w0=
 github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399/go.mod h1:LdwHTNJT99C5fTAzDz0ud328OgXz+gierycbcIx2fRs=
 github.com/vmihailenco/msgpack/v5 v5.3.5 h1:5gO0H1iULLWGhs2H5tbAHIZTV8/cYafcFOr9znI5mJU=
