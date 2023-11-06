@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.1
 	github.com/sebdah/goldie/v2 v2.5.3
 	github.com/sigstore/sigstore v1.7.5
 	github.com/spf13/cobra v1.7.0
