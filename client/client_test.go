@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2023, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -15,30 +15,31 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	httpClient := &http.Client{}
+	httpTransport, _ := http.DefaultTransport.(*http.Transport)
+	httpTransport = httpTransport.Clone()
 
 	tests := []struct {
-		name            string
-		opts            []Option
-		wantErr         bool
-		wantURL         string
-		wantBearerToken string
-		wantUserAgent   string
-		wantHTTPClient  *http.Client
+		name              string
+		opts              []Option
+		wantErr           bool
+		wantURL           string
+		wantBearerToken   string
+		wantUserAgent     string
+		wantHTTPTransport http.RoundTripper
 	}{
-		{"NilConfig", nil, false, defaultBaseURL, "", "", http.DefaultClient},
+		{"NilConfig", nil, false, defaultBaseURL, "", "", http.DefaultTransport},
 		{"HTTPBaseURL", []Option{
 			OptBaseURL("http://build.staging.sylabs.io"),
-		}, false, "http://build.staging.sylabs.io/", "", "", http.DefaultClient},
+		}, false, "http://build.staging.sylabs.io/", "", "", http.DefaultTransport},
 		{"HTTPSBaseURL", []Option{
 			OptBaseURL("https://build.staging.sylabs.io"),
-		}, false, "https://build.staging.sylabs.io/", "", "", http.DefaultClient},
+		}, false, "https://build.staging.sylabs.io/", "", "", http.DefaultTransport},
 		{"HTTPSBaseURLWithPath", []Option{
 			OptBaseURL("https://build.staging.sylabs.io/path"),
-		}, false, "https://build.staging.sylabs.io/path/", "", "", http.DefaultClient},
+		}, false, "https://build.staging.sylabs.io/path/", "", "", http.DefaultTransport},
 		{"HTTPSBaseURLWithPathSlash", []Option{
 			OptBaseURL("https://build.staging.sylabs.io/path/"),
-		}, false, "https://build.staging.sylabs.io/path/", "", "", http.DefaultClient},
+		}, false, "https://build.staging.sylabs.io/path/", "", "", http.DefaultTransport},
 		{"UnsupportedBaseURL", []Option{
 			OptBaseURL("bad:"),
 		}, true, "", "", "", nil},
@@ -47,13 +48,13 @@ func TestNewClient(t *testing.T) {
 		}, true, "", "", "", nil},
 		{"BearerToken", []Option{
 			OptBearerToken("blah"),
-		}, false, defaultBaseURL, "blah", "", http.DefaultClient},
+		}, false, defaultBaseURL, "blah", "", http.DefaultTransport},
 		{"UserAgent", []Option{
 			OptUserAgent("Secret Agent Man"),
-		}, false, defaultBaseURL, "", "Secret Agent Man", http.DefaultClient},
-		{"HTTPClient", []Option{
-			OptHTTPClient(httpClient),
-		}, false, defaultBaseURL, "", "", httpClient},
+		}, false, defaultBaseURL, "", "Secret Agent Man", http.DefaultTransport},
+		{"HTTPTransport", []Option{
+			OptHTTPTransport(httpTransport),
+		}, false, defaultBaseURL, "", "", httpTransport},
 	}
 
 	for _, tt := range tests {
@@ -76,7 +77,7 @@ func TestNewClient(t *testing.T) {
 					t.Errorf("got user agent %v, want %v", got, want)
 				}
 
-				if got, want := c.httpClient, tt.wantHTTPClient; got != want {
+				if got, want := c.httpClient.Transport, tt.wantHTTPTransport; got != want {
 					t.Errorf("got HTTP client %v, want %v", got, want)
 				}
 			}

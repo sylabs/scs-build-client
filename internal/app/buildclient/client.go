@@ -105,14 +105,15 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 	}
 	app.buildURL = feCfg.BuildAPI.URI
 
-	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr, _ := http.DefaultTransport.(*http.Transport)
+	tr = tr.Clone()
 	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: cfg.SkipTLSVerify}
 
 	app.buildClient, err = build.NewClient(
 		build.OptBaseURL(feCfg.BuildAPI.URI),
 		build.OptBearerToken(cfg.AuthToken),
 		build.OptUserAgent(cfg.UserAgent),
-		build.OptHTTPClient(&http.Client{Transport: tr}),
+		build.OptHTTPTransport(tr),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing build client: %w", err)

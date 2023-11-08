@@ -33,16 +33,17 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, w io.Writer) err
 	h := http.Header{}
 	c.setRequestHeaders(h)
 
-	dialer := websocket.DefaultDialer
+	// Clone default websocket dialer
+	dialer := *websocket.DefaultDialer
 
-	// Due to this issue (https://github.com/gorilla/websocket/issues/601), it is not possible
-	// clone the 'c.HTTPClient' transport, so we take only the InsecureSkipVerify and RootCAs
-	// parameters.
-	if tr, ok := c.httpClient.Transport.(*http.Transport); ok {
-		dialer.TLSClientConfig = &tls.Config{
+	// Clone TLS configuration for websocket protocol such as to not interfere with http protocol TLS configuration
+	// (ref: https://github.com/gorilla/websocket/issues/601)
+	if tr, ok := c.httpClient.Transport.(*http.Transport); ok && tr.TLSClientConfig != nil {
+		tlsConfig := &tls.Config{
 			InsecureSkipVerify: tr.TLSClientConfig.InsecureSkipVerify,
 			RootCAs:            tr.TLSClientConfig.RootCAs,
 		}
+		dialer.TLSClientConfig = tlsConfig.Clone()
 	}
 
 	ws, resp, err := dialer.DialContext(ctx, u.String(), h)

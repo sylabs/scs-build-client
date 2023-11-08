@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2019-2023, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the LICENSE.md file
 // distributed with the sources of this project regarding your rights to use or distribute this
 // software.
@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // errUnsupportedProtocolScheme is returned when an unsupported protocol scheme is encountered.
@@ -43,7 +44,7 @@ type clientOptions struct {
 	baseURL     string
 	bearerToken string
 	userAgent   string
-	httpClient  *http.Client
+	transport   http.RoundTripper
 }
 
 // Option are used to populate co.
@@ -73,20 +74,21 @@ func OptUserAgent(agent string) Option {
 	}
 }
 
-// OptHTTPClient sets the client to use to make HTTP requests.
-func OptHTTPClient(c *http.Client) Option {
+// OptHTTPTransport sets the transport for HTTP requests to use.
+func OptHTTPTransport(tr http.RoundTripper) Option {
 	return func(co *clientOptions) error {
-		co.httpClient = c
+		co.transport = tr
 		return nil
 	}
 }
 
 // Client describes the client details.
 type Client struct {
-	baseURL     *url.URL     // Parsed base URL.
-	bearerToken string       // Bearer token to include in "Authorization" header.
-	userAgent   string       // Value to include in "User-Agent" header.
-	httpClient  *http.Client // Client to use for HTTP requests.
+	baseURL                *url.URL     // Parsed base URL.
+	bearerToken            string       // Bearer token to include in "Authorization" header.
+	userAgent              string       // Value to include in "User-Agent" header.
+	httpClient             *http.Client // Client to use for HTTP requests.
+	buildContextHTTPClient *http.Client // Client to use for build context HTTP requests.
 }
 
 const defaultBaseURL = "https://build.sylabs.io/"
@@ -98,8 +100,8 @@ const defaultBaseURL = "https://build.sylabs.io/"
 // By default, requests are not authenticated. To override this behaviour, use OptBearerToken.
 func NewClient(opts ...Option) (*Client, error) {
 	co := clientOptions{
-		baseURL:    defaultBaseURL,
-		httpClient: http.DefaultClient,
+		baseURL:   defaultBaseURL,
+		transport: http.DefaultTransport,
 	}
 
 	// Apply options.
@@ -112,7 +114,11 @@ func NewClient(opts ...Option) (*Client, error) {
 	c := Client{
 		bearerToken: co.bearerToken,
 		userAgent:   co.userAgent,
-		httpClient:  co.httpClient,
+		httpClient: &http.Client{
+			Transport: co.transport,
+			Timeout:   30 * time.Second, // use default from singularity
+		},
+		buildContextHTTPClient: &http.Client{Transport: co.transport},
 	}
 
 	// Normalize base URL.

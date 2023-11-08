@@ -1,4 +1,4 @@
-// Copyright (c) 2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -70,7 +70,7 @@ func (c *Client) getBuildContextUploadLocation(ctx context.Context, size int64, 
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := c.httpClient.Do(req)
+	res, err := c.buildContextHTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
@@ -99,7 +99,7 @@ func (c *Client) putBuildContext(ctx context.Context, loc *url.URL, r io.Reader,
 
 	req.ContentLength = size
 
-	res, err := c.httpClient.Do(req)
+	res, err := c.buildContextHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -226,7 +226,7 @@ func (c *Client) DeleteBuildContext(ctx context.Context, digest string, opts ...
 		return fmt.Errorf("%w", err)
 	}
 
-	res, err := c.httpClient.Do(req)
+	res, err := c.buildContextHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
