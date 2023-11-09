@@ -123,7 +123,7 @@ jobs:
             do
               IMAGE="sylabsio/scs-build:${TAG}-${ARCH}"
               syft packages -q -o cyclonedx-json=sbom.cdx.json "${IMAGE}"
-              cosign attest --predicate sbom.cdx.json --type cyclonedx --key "awskms:///${COSIGN_KEY_ID}" "${IMAGE}"
+              AWS_REGION=us-east-1 cosign attest --predicate sbom.cdx.json --type cyclonedx --key "awskms:///${COSIGN_KEY_ID}" "${IMAGE}"
             done
 
 workflows:
