@@ -53,49 +53,75 @@ func TestOutput(t *testing.T) {
 	}
 
 	// Loop over test cases
-	for _, tt := range tests {
-		tt := tt
+	for _, useTLS := range []bool{true, false} {
+		useTLS := useTLS
 
-		t.Run(tt.description, func(t *testing.T) {
+		name := func() string {
+			if useTLS {
+				return "WithTLS"
+			}
+			return "WithoutTLS"
+		}()
+
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			// Start a mock server
-			m := mockService{t: t}
-			mux := http.NewServeMux()
-			mux.HandleFunc(wsPath, m.ServeWebsocket)
-			s := httptest.NewServer(mux)
-			defer s.Close()
+			for _, tt := range tests {
+				tt := tt
 
-			// Mock server address is fixed for all tests
-			m.httpAddr = s.Listener.Addr().String()
+				t.Run(tt.description, func(t *testing.T) {
+					// Start a mock server
+					m := mockService{t: t}
+					mux := http.NewServeMux()
+					mux.HandleFunc(wsPath, m.ServeWebsocket)
 
-			c, err := NewClient(
-				OptBaseURL(s.URL),
-				OptBearerToken(authToken),
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
+					clientOptions := []Option{}
 
-			// Set the response codes for each stage of the build
-			m.wsResponseCode = tt.wsResponseCode
-			m.wsCloseCode = tt.wsCloseCode
+					var s *httptest.Server
+					if useTLS {
+						s = httptest.NewTLSServer(mux)
 
-			tor := testOutputWriter{
-				fully: tt.outputReadFully,
-				err:   tt.outputReadErr,
-			}
-			err = c.GetOutput(tt.ctx, "id", tor)
-			if tt.expectSuccess {
-				// Ensure the handler returned no error, and the response is as expected
-				if err != nil {
-					t.Fatalf("unexpected stream failure: %v", err)
-				}
-			} else {
-				// Ensure the handler returned an error
-				if err == nil {
-					t.Fatalf("unexpected stream success")
-				}
+						tr, ok := s.Client().Transport.(*http.Transport)
+						if !ok {
+							t.Fatal("Internal error- unable to typecast HTTP client transport")
+						}
+						tr = tr.Clone()
+
+						clientOptions = append(clientOptions, OptHTTPTransport(tr))
+					} else {
+						s = httptest.NewServer(mux)
+					}
+					defer s.Close()
+
+					// Mock server address is fixed for all tests
+					m.httpAddr = s.Listener.Addr().String()
+
+					c, err := NewClient(append(clientOptions, OptBaseURL(s.URL), OptBearerToken(authToken))...)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					// Set the response codes for each stage of the build
+					m.wsResponseCode = tt.wsResponseCode
+					m.wsCloseCode = tt.wsCloseCode
+
+					tor := testOutputWriter{
+						fully: tt.outputReadFully,
+						err:   tt.outputReadErr,
+					}
+					err = c.GetOutput(tt.ctx, "id", tor)
+					if tt.expectSuccess {
+						// Ensure the handler returned no error, and the response is as expected
+						if err != nil {
+							t.Fatalf("unexpected stream failure: %v", err)
+						}
+					} else {
+						// Ensure the handler returned an error
+						if err == nil {
+							t.Fatalf("unexpected stream success")
+						}
+					}
+				})
 			}
 		})
 	}
