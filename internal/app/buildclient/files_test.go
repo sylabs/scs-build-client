@@ -87,7 +87,7 @@ func TestExtractFiles(t *testing.T) {
 
 	// Create test frontend server
 	feRouter := http.NewServeMux()
-	feRouter.HandleFunc("/assets/config/config.prod.json", func(w http.ResponseWriter, r *http.Request) {
+	feRouter.HandleFunc("/assets/config/config.prod.json", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		res := fmt.Sprintf("{\"builderAPI\": {\"uri\": \"%v\"}, \"libraryAPI\": {\"uri\": \"http://invalidserver\"}}}", ts.URL)

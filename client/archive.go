@@ -102,7 +102,7 @@ func (ar *archiver) writeEntry(name string) (err error) {
 
 // walkDirFunc returns a WalkDirFunc that writes each path to ar.
 func (ar *archiver) walkDirFunc() fs.WalkDirFunc {
-	return func(path string, d fs.DirEntry, err error) error {
+	return func(path string, _ fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
