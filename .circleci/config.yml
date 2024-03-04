@@ -6,10 +6,10 @@ orbs:
 executors:
   node:
     docker:
-      - image: node:18-slim
+      - image: node:20-slim
   golangci-lint:
     docker:
-      - image: golangci/golangci-lint:v1.54
+      - image: golangci/golangci-lint:v1.56
   golang-previous:
     docker:
       - image: golang:1.20
@@ -76,8 +76,7 @@ jobs:
     executor: golang-latest
     steps:
       - checkout
-      - setup_remote_docker:
-          version: &docker-version 20.10.11
+      - setup_remote_docker
       - run:
           name: Install Docker
           command: curl -sL https://get.docker.com | bash
@@ -95,8 +94,7 @@ jobs:
     executor: golang-latest
     steps:
       - checkout
-      - setup_remote_docker:
-          version: *docker-version
+      - setup_remote_docker
       - run:
           name: Install Docker
           command: curl -sL https://get.docker.com | bash
