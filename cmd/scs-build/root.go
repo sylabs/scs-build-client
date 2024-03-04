@@ -59,7 +59,7 @@ func execute() error {
 		Short: "Display version information",
 		Long:  "Display binary version, and build info.",
 		Args:  cobra.ExactArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			writeVersion(cmd.OutOrStdout())
 		},
 	})

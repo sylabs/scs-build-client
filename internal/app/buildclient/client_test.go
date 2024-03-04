@@ -31,7 +31,7 @@ func newTestFEServer(t *testing.T) *httptest.Server {
 	t.Helper()
 
 	router := http.NewServeMux()
-	router.Handle("/assets/config/config.prod.json", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	router.Handle("/assets/config/config.prod.json", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if err := json.NewEncoder(w).Encode(&endpoints.FrontendConfig{
 			LibraryAPI: endpoints.URI{URI: testLibraryURI},
 			BuildAPI:   endpoints.URI{URI: testBuildURI},
@@ -181,7 +181,7 @@ func Test_build(t *testing.T) {
 	buildSrvMux := http.NewServeMux()
 
 	// Handler for '/v1/build'
-	buildSrvMux.HandleFunc("/v1/build", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	buildSrvMux.HandleFunc("/v1/build", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 		mockBuildResponse := struct {
@@ -196,7 +196,7 @@ func Test_build(t *testing.T) {
 	}))
 
 	// Handler for '/v1/build/'
-	buildSrvMux.HandleFunc("/v1/build/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	buildSrvMux.HandleFunc("/v1/build/", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 		response := struct {
@@ -238,7 +238,7 @@ func Test_build(t *testing.T) {
 	buildSrv := httptest.NewServer(buildSrvMux)
 	defer buildSrv.Close()
 
-	frontendSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	frontendSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 		feConfig := endpoints.FrontendConfig{
