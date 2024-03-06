@@ -12,7 +12,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/sylabs/json-resp v0.9.2
 	github.com/sylabs/scs-library-client v1.4.7
-	github.com/sylabs/sif/v2 v2.15.1
+	github.com/sylabs/sif/v2 v2.15.2
 	golang.org/x/term v0.18.0
 )
 
@@ -23,7 +23,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-log/log v0.2.0 // indirect
 	github.com/google/go-containerregistry v0.19.0 // indirect
-	github.com/google/uuid v1.5.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/letsencrypt/boulder v0.0.0-20230907030200-6d76a0f91e1e // indirect
