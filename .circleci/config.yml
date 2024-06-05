@@ -87,6 +87,9 @@ jobs:
           name: Install syft
           command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - run:
+          name: Install cosign
+          command: go install github.com/sigstore/cosign/cmd/cosign@latest
+      - run:
           name: Test Release
           command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release --snapshot --skip-publish
 
