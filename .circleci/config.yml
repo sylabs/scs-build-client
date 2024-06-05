@@ -91,7 +91,7 @@ jobs:
           command: go install github.com/sigstore/cosign/cmd/cosign@latest
       - run:
           name: Test Release
-          command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release --snapshot --skip-publish
+          command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release --snapshot --skip publish
 
   publish-release:
     executor: golang-latest
