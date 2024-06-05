@@ -3,13 +3,18 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@3
 
+parameters:
+  cosign-version:
+    type: string
+    default: '2.2.4'
+
 executors:
   node:
     docker:
       - image: node:20-slim
   golangci-lint:
     docker:
-      - image: golangci/golangci-lint:v1.56
+      - image: golangci/golangci-lint:v1.59
   golang-previous:
     docker:
       - image: golang:1.21
@@ -87,8 +92,14 @@ jobs:
           name: Install syft
           command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - run:
+          name: Install cosign
+          command: |
+            COSIGN_VERSION="v<< pipeline.parameters.cosign-version >>"
+            wget -q "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+            wget -q -O - "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign_checksums.txt" | grep -w cosign-linux-amd64 | sha256sum -c
+      - run:
           name: Test Release
-          command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release --snapshot --skip-publish
+          command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release --snapshot --skip publish
 
   publish-release:
     executor: golang-latest
@@ -112,7 +123,10 @@ jobs:
           command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release 
       - run:
           name: Install cosign
-          command: go install github.com/sigstore/cosign/cmd/cosign@latest
+          command: |
+            COSIGN_VERSION="v<< pipeline.parameters.cosign-version >>"
+            wget -q "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+            wget -q -O - "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign_checksums.txt" | grep -w cosign-linux-amd64 | sha256sum -c
       - run:
           name: Attach attestations to image
           command: |
