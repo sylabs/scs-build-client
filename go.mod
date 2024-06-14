@@ -10,8 +10,8 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	github.com/sylabs/json-resp v0.9.2
-	github.com/sylabs/scs-library-client v1.4.8
+	github.com/sylabs/json-resp v0.9.3
+	github.com/sylabs/scs-library-client v1.4.9
 	github.com/sylabs/sif/v2 v2.16.0
 	golang.org/x/term v0.21.0
 )
@@ -47,7 +47,7 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
