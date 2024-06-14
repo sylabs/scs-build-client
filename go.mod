@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/ProtonMail/go-crypto v1.0.0
-	github.com/gorilla/websocket v1.5.2
+	github.com/gorilla/websocket v1.5.3
 	github.com/sebdah/goldie/v2 v2.5.3
 	github.com/sigstore/sigstore v1.8.4
 	github.com/spf13/cobra v1.8.0
@@ -47,7 +47,6 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
