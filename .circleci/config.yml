@@ -170,3 +170,4 @@ workflows:
             - dockerhub-release
             - github-release
             - cosign-release
+            - scs-production
