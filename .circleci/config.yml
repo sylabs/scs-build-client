@@ -119,6 +119,9 @@ jobs:
           name: Install syft
           command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - run:
+          name: Publish Release
+          command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release
+      - run:
           name: Install cosign
           command: |
             COSIGN_VERSION="v<< pipeline.parameters.cosign-version >>"
@@ -126,9 +129,6 @@ jobs:
             wget -q -O - "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign_checksums.txt" | grep -w cosign-linux-amd64 | sha256sum -c
             install cosign-linux-amd64 /usr/local/bin/cosign
             rm cosign-linux-amd64
-      - run:
-          name: Publish Release
-          command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release
       - run:
           name: Attach attestations to image
           command: |
