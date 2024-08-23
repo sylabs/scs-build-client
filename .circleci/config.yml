@@ -130,6 +130,9 @@ jobs:
             install cosign-linux-amd64 /usr/local/bin/cosign
             rm cosign-linux-amd64
       - run:
+          name: Get Cosign Key
+          command: echo $COSIGN_KEY | base64 -d > cosign.key
+      - run:
           name: Attach attestations to image
           command: |
             TAG="`echo $CIRCLE_TAG | sed -e 's/^v//'`"
@@ -137,7 +140,7 @@ jobs:
             do
               IMAGE="sylabsio/scs-build:${TAG}-${ARCH}"
               syft scan -q -o cyclonedx-json=sbom.cdx.json "${IMAGE}"
-              AWS_REGION=us-east-1 cosign attest --predicate sbom.cdx.json --type cyclonedx --key "awskms:///${COSIGN_KEY_ID}" "${IMAGE}"
+              cosign attest --predicate sbom.cdx.json --type cyclonedx --key ./cosign.key "${IMAGE}"
             done
 
 workflows:
@@ -170,4 +173,3 @@ workflows:
             - dockerhub-release
             - github-release
             - cosign-release
-            - scs-production
