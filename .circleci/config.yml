@@ -127,6 +127,8 @@ jobs:
             COSIGN_VERSION="v<< pipeline.parameters.cosign-version >>"
             wget -q "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
             wget -q -O - "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign_checksums.txt" | grep -w cosign-linux-amd64 | sha256sum -c
+            install cosign-linux-amd64 /usr/local/bin/cosign
+            rm cosign-linux-amd64
       - run:
           name: Attach attestations to image
           command: |
@@ -134,7 +136,7 @@ jobs:
             for ARCH in amd64 arm64v8
             do
               IMAGE="sylabsio/scs-build:${TAG}-${ARCH}"
-              syft packages -q -o cyclonedx-json=sbom.cdx.json "${IMAGE}"
+              syft scan -q -o cyclonedx-json=sbom.cdx.json "${IMAGE}"
               AWS_REGION=us-east-1 cosign attest --predicate sbom.cdx.json --type cyclonedx --key "awskms:///${COSIGN_KEY_ID}" "${IMAGE}"
             done
 
