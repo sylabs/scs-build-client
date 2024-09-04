@@ -90,8 +90,8 @@ github.com/secure-systems-lab/go-securesystemslib v0.8.0/go.mod h1:UH2VZVuJfCYR8
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
 github.com/sergi/go-diff v1.2.0 h1:XU+rvMAioB0UC3q1MFrIQy4Vo5/4VsRDQQXHsEya6xQ=
 github.com/sergi/go-diff v1.2.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
-github.com/sigstore/sigstore v1.8.8 h1:B6ZQPBKK7Z7tO3bjLNnlCMG+H66tO4E/+qAphX8T/hg=
-github.com/sigstore/sigstore v1.8.8/go.mod h1:GW0GgJSCTBJY3fUOuGDHeFWcD++c4G8Y9K015pwcpDI=
+github.com/sigstore/sigstore v1.8.9 h1:NiUZIVWywgYuVTxXmRoTT4O4QAGiTEKup4N1wdxFadk=
+github.com/sigstore/sigstore v1.8.9/go.mod h1:d9ZAbNDs8JJfxJrYmulaTazU3Pwr8uLL9+mii4BNR3w=
 github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9ySo=
 github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
 github.com/spf13/afero v1.11.0 h1:WJQKhtpdm3v2IzqG8VMqrr6Rf3UYpEF239Jy9wNepM8=
