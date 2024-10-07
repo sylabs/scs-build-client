@@ -13,7 +13,7 @@ require (
 	github.com/sylabs/json-resp v0.9.4
 	github.com/sylabs/scs-library-client v1.4.10
 	github.com/sylabs/sif/v2 v2.19.1
-	golang.org/x/term v0.24.0
+	golang.org/x/term v0.25.0
 )
 
 require (
@@ -49,7 +49,7 @@ require (
 	golang.org/x/crypto v0.25.0 // indirect
 	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
