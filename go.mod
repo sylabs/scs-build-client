@@ -9,7 +9,7 @@ require (
 	github.com/sigstore/sigstore v1.8.10
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/sylabs/json-resp v0.9.4
 	github.com/sylabs/scs-library-client v1.4.10
 	github.com/sylabs/sif/v2 v2.20.0
