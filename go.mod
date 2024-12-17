@@ -1,6 +1,6 @@
 module github.com/sylabs/scs-build-client
 
-go 1.22.8
+go 1.22.0
 
 require (
 	github.com/ProtonMail/go-crypto v1.1.3
@@ -11,7 +11,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
 	github.com/sylabs/json-resp v0.9.4
-	github.com/sylabs/scs-library-client v1.4.10
+	github.com/sylabs/scs-library-client v1.4.11
 	github.com/sylabs/sif/v2 v2.20.2
 	golang.org/x/term v0.27.0
 )
