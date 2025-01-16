@@ -3,7 +3,7 @@ module github.com/sylabs/scs-build-client
 go 1.22.0
 
 require (
-	github.com/ProtonMail/go-crypto v1.1.4
+	github.com/ProtonMail/go-crypto v1.1.5
 	github.com/gorilla/websocket v1.5.3
 	github.com/sebdah/goldie/v2 v2.5.5
 	github.com/sigstore/sigstore v1.8.12
