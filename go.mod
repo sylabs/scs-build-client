@@ -12,7 +12,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/sylabs/json-resp v0.9.4
 	github.com/sylabs/scs-library-client v1.4.11
-	github.com/sylabs/sif/v2 v2.21.0
+	github.com/sylabs/sif/v2 v2.21.1
 	golang.org/x/term v0.29.0
 )
 
