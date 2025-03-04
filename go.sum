@@ -122,8 +122,8 @@ github.com/sylabs/json-resp v0.9.4 h1:gFvnPdfrBUQgTAFKcxW8VOTfFdj/eOwBrwSG76BwiC
 github.com/sylabs/json-resp v0.9.4/go.mod h1:Q9X4wRlZNPv3x76KaL8vTCBO4aC/DP2gh13xdtEqd1g=
 github.com/sylabs/scs-library-client v1.4.11 h1:hI5EsLAoexYJ6kVDbmCN5LWS4vIleLxBWorOhKovp3c=
 github.com/sylabs/scs-library-client v1.4.11/go.mod h1:9EAaOoSKHp4hJaZSPKQTl7qWvJE+vO7U5D8vbLKzWPs=
-github.com/sylabs/sif/v2 v2.21.0 h1:vvHp5vBsyIOv70T7rgWN8CcT6cS3j3Jtm4rELZJYc4c=
-github.com/sylabs/sif/v2 v2.21.0/go.mod h1:d4ifdG5JnlEwHmM6dWcAqZiGNWEAj9RM8P8JwkRnG7o=
+github.com/sylabs/sif/v2 v2.21.1 h1:GZ0b5//AFAqJEChd8wHV/uSKx/l1iuGYwjR8nx+4wPI=
+github.com/sylabs/sif/v2 v2.21.1/go.mod h1:YoqEGQnb5x/ItV653bawXHZJOXQaEWpGwHsSD3YePJI=
 github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 h1:e/5i7d4oYZ+C1wj2THlRK+oAhjeS/TRQwMfkIuet3w0=
 github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399/go.mod h1:LdwHTNJT99C5fTAzDz0ud328OgXz+gierycbcIx2fRs=
 go.uber.org/atomic v1.9.0 h1:ECmE8Bn/WFTYwEW/bpKD3M8VtR/zQVbavAoalC1PYyE=
