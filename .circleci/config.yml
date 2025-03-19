@@ -130,17 +130,15 @@ jobs:
             install cosign-linux-amd64 /usr/local/bin/cosign
             rm cosign-linux-amd64
       - run:
-          name: Get Cosign Key
-          command: echo $COSIGN_KEY | base64 -d > cosign.key
-      - run:
           name: Attach attestations to image
           command: |
+            aws ecr get-login-password | cosign login -u AWS --password-stdin ${AWS_ECR_ENDPOINT}
             TAG="`echo $CIRCLE_TAG | sed -e 's/^v//'`"
             for ARCH in amd64 arm64v8
             do
               IMAGE="sylabsio/scs-build:${TAG}-${ARCH}"
               syft scan -q -o cyclonedx-json=sbom.cdx.json "${IMAGE}"
-              cosign attest --predicate sbom.cdx.json --type cyclonedx --key ./cosign.key "${IMAGE}"
+              cosign attest --yes --predicate sbom.cdx.json --type cyclonedx --key "awskms:///${COSIGN_KEY_ID}" "${IMAGE}"
             done
 
 workflows:
@@ -170,6 +168,7 @@ workflows:
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
           context:
+            - aws-production
             - dockerhub-release
             - github-release
             - cosign-release
