@@ -170,7 +170,6 @@ func TestBuild(t *testing.T) {
 	m.httpAddr = s.Listener.Addr().String()
 
 	// Table of tests to run
-	// nolint:maligned
 	tests := []struct {
 		description         string
 		expectSubmitSuccess bool

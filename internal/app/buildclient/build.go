@@ -108,7 +108,9 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error getting config: %w", err)
 	}
 
-	if v.GetString(keyPassphrase) != "" && !(cmd.Flag(keySigningKeyIndex).Changed || cmd.Flag(keyFingerprint).Changed) {
+	if v.GetString(keyPassphrase) != "" &&
+		!cmd.Flag(keySigningKeyIndex).Changed &&
+		!cmd.Flag(keyFingerprint).Changed {
 		return fmt.Errorf("--passphrase only effective when PGP signing enabled")
 	}
 
