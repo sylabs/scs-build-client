@@ -34,7 +34,6 @@ func TestOutput(t *testing.T) {
 	defer cancel()
 
 	// Table of tests to run
-	// nolint:maligned
 	tests := []struct {
 		description     string
 		expectSuccess   bool
