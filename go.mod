@@ -8,7 +8,7 @@ require (
 	github.com/sebdah/goldie/v2 v2.5.5
 	github.com/sigstore/sigstore v1.9.1
 	github.com/spf13/cobra v1.9.1
-	github.com/spf13/viper v1.20.0
+	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/sylabs/json-resp v0.9.4
 	github.com/sylabs/scs-library-client v1.4.12
