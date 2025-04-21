@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -28,6 +28,7 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, w io.Writer) err
 	if c.baseURL.Scheme == "https" {
 		wsScheme = "wss"
 	}
+
 	u.Scheme = wsScheme
 
 	h := http.Header{}
@@ -50,8 +51,11 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, w io.Writer) err
 	if err != nil {
 		return fmt.Errorf("failed to dial: %w", err)
 	}
-	defer resp.Body.Close()
-	defer ws.Close()
+
+	defer func() {
+		resp.Body.Close()
+		ws.Close()
+	}()
 
 	errChan := make(chan error)
 
@@ -88,6 +92,7 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, w io.Writer) err
 		ws.Close()
 
 		<-errChan
+
 		return nil
 	case err := <-errChan:
 		return err

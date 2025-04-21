@@ -25,6 +25,7 @@ func (tor testOutputWriter) Write(p []byte) (int, error) {
 	if tor.fully {
 		return len(p), tor.err
 	}
+
 	return len(p) - 1, tor.err
 }
 
@@ -57,6 +58,7 @@ func TestOutput(t *testing.T) {
 			if useTLS {
 				return "WithTLS"
 			}
+
 			return "WithoutTLS"
 		}()
 
@@ -73,6 +75,7 @@ func TestOutput(t *testing.T) {
 					clientOptions := []Option{}
 
 					var s *httptest.Server
+
 					if useTLS {
 						s = httptest.NewTLSServer(mux)
 
@@ -80,12 +83,14 @@ func TestOutput(t *testing.T) {
 						if !ok {
 							t.Fatal("Internal error- unable to typecast HTTP client transport")
 						}
+
 						tr = tr.Clone()
 
 						clientOptions = append(clientOptions, OptHTTPTransport(tr))
 					} else {
 						s = httptest.NewServer(mux)
 					}
+
 					defer s.Close()
 
 					// Mock server address is fixed for all tests
@@ -104,7 +109,9 @@ func TestOutput(t *testing.T) {
 						fully: tt.outputReadFully,
 						err:   tt.outputReadErr,
 					}
+
 					err = c.GetOutput(tt.ctx, "id", tor)
+
 					if tt.expectSuccess {
 						// Ensure the handler returned no error, and the response is as expected
 						if err != nil {

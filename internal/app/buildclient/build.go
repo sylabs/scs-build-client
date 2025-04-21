@@ -103,9 +103,11 @@ func AddBuildCommand(rootCmd *cobra.Command) {
 
 func getConfig(cmd *cobra.Command) (*viper.Viper, error) {
 	v := viper.New()
+
 	v.SetEnvPrefix("sylabs")
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+
 	return v, v.BindPFlags(cmd.Flags())
 }
 
@@ -137,6 +139,7 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		v.GetBool(keySign)
 
 	var signerOpts []integrity.SignerOpt
+
 	if signing {
 		fmt.Printf("Build artifacts will be automatically signed\n")
 
@@ -147,6 +150,7 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	var libraryRef string
+
 	if len(args) > 1 {
 		libraryRef = args[1]
 	} else {

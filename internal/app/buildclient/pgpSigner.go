@@ -1,4 +1,4 @@
-// Copyright (c) 2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2023-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -40,6 +40,7 @@ func parsePGPSignerOpts(v *viper.Viper) ([]pgpSignerOpt, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	so = append(so, signKeyringFile(path))
 
 	if keyringFingerprint := v.GetString(keyFingerprint); keyringFingerprint != "" {
@@ -77,6 +78,7 @@ func keyringPath(keyring string) (string, error) {
 
 func keyringPassphraseFunc() ([]byte, error) {
 	fmt.Print("Keyring passphrase: ")
+
 	bytePassword, err := term.ReadPassword(0)
 
 	// Add missing newline after passphrase prompt
@@ -92,28 +94,39 @@ func keyringPassphraseFunc() ([]byte, error) {
 func keyringEntitySelectorFunc(e openpgp.EntityList) (*openpgp.Entity, error) {
 	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
 		var index int
+
 		for i, entity := range e {
 			for _, t := range entity.Identities {
 				fmt.Printf("%d) U: %s (%s) <%s>\n", i, t.UserId.Name, t.UserId.Comment, t.UserId.Email)
 			}
+
 			fmt.Printf("   C: %s - %d\n", entity.PrimaryKey.CreationTime, i)
 			fmt.Printf("   F: %0X\n", entity.PrimaryKey.Fingerprint)
+
 			bits, _ := entity.PrimaryKey.BitLength()
+
 			fmt.Printf("   L: %d\n", bits)
 			fmt.Printf("   --------\n")
 		}
+
 		fmt.Printf("Key #: ")
+
 		reader := bufio.NewReader(os.Stdin)
+
 		input, _ := reader.ReadString('\n')
+
 		index, err := strconv.Atoi(strings.TrimSuffix(input, "\n"))
 		if err != nil {
 			return nil, err
 		}
+
 		if index < 0 || index >= len(e) {
 			return nil, errIndexOutOfRange
 		}
+
 		return e[index], nil
 	}
+
 	return nil, nil //nolint:nilnil
 }
 
@@ -134,6 +147,7 @@ func signKeyringFingerprint(keyringFingerprint string) pgpSignerOpt {
 				return e, nil
 			}
 		}
+
 		return nil, errKeyNotFound
 	})
 }
@@ -144,6 +158,7 @@ func signKeyringKeyIdx(n int) pgpSignerOpt {
 		if n >= len(el) {
 			return nil, errKeyNotFound
 		}
+
 		return el[n], nil
 	})
 }
@@ -176,11 +191,13 @@ type pgpSignerOpt func(*pgpSignerOpts) error
 // stripPublicKeys returns an EntityList of PrivateKeys only.
 func stripPublicKeys(e openpgp.EntityList) openpgp.EntityList {
 	var el openpgp.EntityList
+
 	for _, entity := range e {
 		if entity.PrivateKey != nil {
 			el = append(el, entity)
 		}
 	}
+
 	return el
 }
 
@@ -199,13 +216,15 @@ func getPGPSignerOpts(opts ...pgpSignerOpt) ([]integrity.SignerOpt, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Using keyfile: %v\n", s.keyringFile)
 	defer keyringFileBuffer.Close()
+
+	fmt.Printf("Using keyfile: %v\n", s.keyringFile)
 
 	e, err := openpgp.ReadKeyRing(keyringFileBuffer)
 	if err != nil {
 		return nil, fmt.Errorf("key read: %w", err)
 	}
+
 	e = stripPublicKeys(e)
 	if len(e) == 0 {
 		return nil, errNoPrivateKeyFound
@@ -215,6 +234,7 @@ func getPGPSignerOpts(opts ...pgpSignerOpt) ([]integrity.SignerOpt, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	for _, i := range entity.Identities {
 		fmt.Printf("Using Key: %s (%s) <%s>\n", i.UserId.Name, i.UserId.Comment, i.UserId.Email)
 	}
@@ -224,6 +244,7 @@ func getPGPSignerOpts(opts ...pgpSignerOpt) ([]integrity.SignerOpt, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if err = entity.PrivateKey.Decrypt(b); err != nil {
 			return nil, fmt.Errorf("key decrypt: %w", err)
 		}

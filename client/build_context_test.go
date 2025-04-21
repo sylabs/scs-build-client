@@ -51,6 +51,7 @@ func (m *mockUploadBuildContext) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Size   int64  `json:"size"`
 			Digest string `json:"digest"`
 		}
+
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			m.t.Fatalf("failed to decode request: %v", err)
 		}
@@ -218,6 +219,7 @@ func (m *mockDeleteBuildContext) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		if err := jsonresp.WriteError(w, "", m.code); err != nil {
 			m.t.Fatalf("failed to write error: %v", err)
 		}
+
 		return
 	}
 

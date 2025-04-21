@@ -33,6 +33,7 @@ linters:
     - unparam
     - unused
     - usetesting
+    - wsl
   exclusions:
     generated: lax
     presets:

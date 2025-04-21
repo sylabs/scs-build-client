@@ -68,6 +68,7 @@ func withKeyIdx(t *testing.T) (*cobra.Command, *viper.Viper) {
 	v.Set(keyPassphrase, "passphrase goes here")
 
 	v.Set(keySigningKeyIndex, 0)
+
 	cmd.Flag(keySigningKeyIndex).Changed = true
 
 	return cmd, v

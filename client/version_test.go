@@ -27,6 +27,7 @@ func (m *mockVersion) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err := jsonresp.WriteError(w, m.message, m.code); err != nil {
 			m.t.Fatalf("failed to write error: %v", err)
 		}
+
 		return
 	}
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -86,9 +86,11 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error parsing %v as URL: %w", cfg.LibraryRef, err)
 		}
+
 		if ref.Scheme != "file" && ref.Scheme != "" {
 			return nil, fmt.Errorf("unsupported library ref scheme %v", ref.Scheme)
 		}
+
 		app.dstFileName = ref.Path
 	}
 
@@ -103,10 +105,13 @@ func New(ctx context.Context, cfg *Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	app.buildURL = feCfg.BuildAPI.URI
 
 	tr, _ := http.DefaultTransport.(*http.Transport)
+
 	tr = tr.Clone()
+
 	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: cfg.SkipTLSVerify}
 
 	app.buildClient, err = build.NewClient(
@@ -169,6 +174,7 @@ func (app *App) uploadBuildContext(ctx context.Context, rawDef []byte) (string, 
 	if err != nil {
 		return "", fmt.Errorf("error getting build context files: %w", err)
 	}
+
 	if files == nil {
 		return "", errNoBuildContextFiles
 	}
@@ -178,6 +184,7 @@ func (app *App) uploadBuildContext(ctx context.Context, rawDef []byte) (string, 
 	if err != nil {
 		return "", err
 	}
+
 	return digest, nil
 }
 
@@ -185,6 +192,7 @@ func appendFileSuffix(name, suffix string, appendSuffix bool) string {
 	if !appendSuffix {
 		return name
 	}
+
 	return fmt.Sprintf("%v-%v", name, suffix)
 }
 
@@ -202,6 +210,7 @@ func (app *App) Run(ctx context.Context) error {
 	}
 
 	var err error
+
 	buildDef, err := getBuildDef(app.buildSpec)
 	if err != nil {
 		return fmt.Errorf("unable to get build definition: %w", err)
@@ -252,6 +261,7 @@ func (app *App) build(ctx context.Context, Def []byte, Context string, Archs []s
 			if app.libraryRef == nil {
 				fmt.Printf("Build artifact %v is available for 24 hours or less\n", bi.LibraryRef())
 			}
+
 			continue
 		}
 
@@ -265,6 +275,7 @@ func (app *App) build(ctx context.Context, Def []byte, Context string, Archs []s
 		if err != nil {
 			return fmt.Errorf("error opening file %v for reading: %w", dstFileName, err)
 		}
+
 		fmt.Fprintf(os.Stderr, "Wrote %v (%d bytes)\n", dstFileName, fi.Size())
 	}
 
@@ -278,8 +289,10 @@ func (app *App) directLibraryUpload(filename string) bool {
 func (app *App) buildArch(ctx context.Context, arch string, def []byte, buildContext string, libraryRef string, dstFileName string) (*build.BuildInfo, error) {
 	signed := app.signerOpts != nil
 
-	var tmpFileName string
-	var tmpLibraryRef string
+	var (
+		tmpFileName   string
+		tmpLibraryRef string
+	)
 
 	if !signed {
 		if libraryRef != "" && dstFileName == "" {
@@ -297,12 +310,10 @@ func (app *App) buildArch(ctx context.Context, arch string, def []byte, buildCon
 
 	// Build completed successfully
 	if !signed {
+		// Build image uploaded directly to library, otherwise written directly to 'tmpFileName'
 		if tmpFileName == "" {
-			// Build image uploaded directly to library
 			return bi, nil
 		}
-
-		// Build image will be written directly to 'tmpFileName'
 	} else {
 		if dstFileName != "" || libraryRef != "" {
 			// Create (local) temporary file for images being pushed directly to library
@@ -310,7 +321,9 @@ func (app *App) buildArch(ctx context.Context, arch string, def []byte, buildCon
 			if err != nil {
 				return nil, err
 			}
+
 			f.Close()
+
 			tmpFileName = f.Name()
 		}
 	}
@@ -353,6 +366,7 @@ func (app *App) uploadImage(ctx context.Context, tmpFileName, arch string) error
 	if err != nil {
 		return fmt.Errorf("uploading file: %w", err)
 	}
+
 	defer func() {
 		_ = fp.Close()
 	}()
@@ -369,8 +383,6 @@ func (app *App) uploadImage(ctx context.Context, tmpFileName, arch string) error
 
 // reportErrs iterates over arch/error map and outputs error(s) to console
 func (app *App) reportErrs(errs map[string]error) error {
-	// Report any build errors
-
 	if len(errs) == 0 {
 		return nil
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -36,6 +36,7 @@ func TestSubmit(t *testing.T) {
 
 	// Start a mock server
 	m := mockService{t: t}
+
 	s := httptest.NewServer(&m)
 	defer s.Close()
 
@@ -62,9 +63,11 @@ func TestSubmit(t *testing.T) {
 				if bi.ID() == "" {
 					t.Fatalf("invalid ID")
 				}
+
 				if bi.LibraryRef() == "" {
 					t.Errorf("empty Library ref")
 				}
+
 				if bi.LibraryURL() == "" {
 					t.Errorf("empty Library URL")
 				}
@@ -76,6 +79,7 @@ func TestSubmit(t *testing.T) {
 func TestCancel(t *testing.T) {
 	// Start a mock server
 	m := mockService{t: t}
+
 	s := httptest.NewServer(&m)
 	defer s.Close()
 

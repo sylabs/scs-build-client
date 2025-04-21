@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -153,6 +153,7 @@ func TestNewRequest(t *testing.T) {
 				if err != nil {
 					t.Errorf("failed to read body: %v", err)
 				}
+
 				if got, want := string(b), tt.body; got != want {
 					t.Errorf("got body %v, want %v", got, want)
 				}
@@ -161,10 +162,12 @@ func TestNewRequest(t *testing.T) {
 				if got, want := ok, (tt.wantBearerToken != ""); got != want {
 					t.Fatalf("presence of auth bearer %v, want %v", got, want)
 				}
+
 				if ok {
 					if got, want := len(authBearer), 1; got != want {
 						t.Fatalf("got %v auth bearer(s), want %v", got, want)
 					}
+
 					if got, want := authBearer[0], tt.wantBearerToken; got != want {
 						t.Errorf("got auth bearer %v, want %v", got, want)
 					}
@@ -174,10 +177,12 @@ func TestNewRequest(t *testing.T) {
 				if got, want := ok, (tt.wantUserAgent != ""); got != want {
 					t.Fatalf("presence of user agent %v, want %v", got, want)
 				}
+
 				if ok {
 					if got, want := len(userAgent), 1; got != want {
 						t.Fatalf("got %v user agent(s), want %v", got, want)
 					}
+
 					if got, want := userAgent[0], tt.wantUserAgent; got != want {
 						t.Errorf("got user agent %v, want %v", got, want)
 					}
