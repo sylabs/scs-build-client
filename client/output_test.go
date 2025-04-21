@@ -53,8 +53,6 @@ func TestOutput(t *testing.T) {
 
 	// Loop over test cases
 	for _, useTLS := range []bool{true, false} {
-		useTLS := useTLS
-
 		name := func() string {
 			if useTLS {
 				return "WithTLS"
@@ -66,8 +64,6 @@ func TestOutput(t *testing.T) {
 			t.Parallel()
 
 			for _, tt := range tests {
-				tt := tt
-
 				t.Run(tt.description, func(t *testing.T) {
 					// Start a mock server
 					m := mockService{t: t}

@@ -223,7 +223,7 @@ func Test_build(t *testing.T) {
 		defer c.Close()
 
 		// Write 10 lines of sample build output
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			if err := c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Sample remote build output: line #%d\n", i))); err != nil {
 				t.Fatalf("error writing to websocket: %v", err)
 			}
