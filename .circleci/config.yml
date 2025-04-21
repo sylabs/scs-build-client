@@ -6,7 +6,7 @@ orbs:
 parameters:
   cosign-version:
     type: string
-    default: '2.4.2'
+    default: '2.5.0'
 
 executors:
   node:
