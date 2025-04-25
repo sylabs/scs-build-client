@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -78,6 +78,7 @@ func TestGetFrontendConfig(t *testing.T) {
 				assert.Equal(t, result.LibraryAPI.URI, tt.expectedLibraryURI)
 				assert.Equal(t, result.BuildAPI.URI, tt.expectedBuildURI)
 			}
+
 			if tt.expectedErr != nil {
 				assert.Nil(t, result)
 				assert.ErrorIs(t, err, tt.expectedErr)

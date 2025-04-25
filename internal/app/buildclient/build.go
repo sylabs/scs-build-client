@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -70,35 +70,56 @@ var buildCmd = &cobra.Command{
   Using --sign will enable automatic PGP signing. Use '--sign --key FILE' to sign with private key.`,
 }
 
-var errSigningNotSupported = errors.New("build and sign ephemeral image is not supported")
+var (
+	errSigningNotSupported   = errors.New("build and sign ephemeral image is not supported")
+	errPassphraseNotRequired = errors.New("--passphrase only effective when PGP signing enabled")
+)
+
+// addBuildCommandFlags configures flags for 'build' subcommand.
+func addBuildCommandFlags(cmd *cobra.Command) {
+	cmd.Flags().String(keyAccessToken, "", "Access token")
+	cmd.Flags().Bool(keySkipTLSVerify, false, "Skip SSL/TLS certificate verification")
+	cmd.Flags().StringSlice(keyArch, []string{runtime.GOARCH}, "Requested build architecture")
+	cmd.Flags().String(keyFrontendURL, "", "Singularity Container Services or Singularity Enterprise URL")
+	cmd.Flags().Bool(keyForceOverwrite, false, "Overwrite image file if it exists")
+	cmd.Flags().Bool(keySign, false, "Automatically sign image after build")
+	cmd.Flags().IntP(keySigningKeyIndex, "k", -1, "PGP private key to use")
+	cmd.Flags().String(keyFingerprint, "", "Fingerprint for PGP key to sign with")
+	cmd.Flags().String(keyKeyring, "", "Full path to PGP keyring")
+	cmd.Flags().String(keyPassphrase, "", "Passphrase for PGP key")
+	cmd.Flags().String(keyPrivateSigningKey, "", "Private key for signing")
+
+	cmd.MarkFlagsMutuallyExclusive(keySigningKeyIndex, keyFingerprint, keyPrivateSigningKey)
+	cmd.MarkFlagsMutuallyExclusive(keyKeyring, keyPrivateSigningKey)
+	cmd.MarkFlagsMutuallyExclusive(keyPassphrase, keyPrivateSigningKey)
+	cmd.MarkFlagsMutuallyExclusive(keyFingerprint, keyPrivateSigningKey)
+}
 
 func AddBuildCommand(rootCmd *cobra.Command) {
-	buildCmd.Flags().String(keyAccessToken, "", "Access token")
-	buildCmd.Flags().Bool(keySkipTLSVerify, false, "Skip SSL/TLS certificate verification")
-	buildCmd.Flags().StringSlice(keyArch, []string{runtime.GOARCH}, "Requested build architecture")
-	buildCmd.Flags().String(keyFrontendURL, "", "Singularity Container Services or Singularity Enterprise URL")
-	buildCmd.Flags().Bool(keyForceOverwrite, false, "Overwrite image file if it exists")
-	buildCmd.Flags().Bool(keySign, false, "Automatically sign image after build")
-	buildCmd.Flags().IntP(keySigningKeyIndex, "k", -1, "PGP private key to use")
-	buildCmd.Flags().String(keyFingerprint, "", "Fingerprint for PGP key to sign with")
-	buildCmd.Flags().String(keyKeyring, "", "Full path to PGP keyring")
-	buildCmd.Flags().String(keyPassphrase, "", "Passphrase for PGP key")
-	buildCmd.Flags().String(keyPrivateSigningKey, "", "Private key for signing")
-
-	buildCmd.MarkFlagsMutuallyExclusive(keySigningKeyIndex, keyFingerprint, keyPrivateSigningKey)
-	buildCmd.MarkFlagsMutuallyExclusive(keyKeyring, keyPrivateSigningKey)
-	buildCmd.MarkFlagsMutuallyExclusive(keyPassphrase, keyPrivateSigningKey)
-	buildCmd.MarkFlagsMutuallyExclusive(keyFingerprint, keyPrivateSigningKey)
+	addBuildCommandFlags(buildCmd)
 
 	rootCmd.AddCommand(buildCmd)
 }
 
 func getConfig(cmd *cobra.Command) (*viper.Viper, error) {
 	v := viper.New()
+
 	v.SetEnvPrefix("sylabs")
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+
 	return v, v.BindPFlags(cmd.Flags())
+}
+
+func validateArgs(cmd *cobra.Command, v *viper.Viper) error {
+	// Error if passphrase has been set and signing key index and fingerprint have NOT been set.
+	if v.GetString(keyPassphrase) != "" &&
+		!cmd.Flag(keySigningKeyIndex).Changed &&
+		!cmd.Flag(keyFingerprint).Changed {
+		return errPassphraseNotRequired
+	}
+
+	return nil
 }
 
 func executeBuildCmd(cmd *cobra.Command, args []string) error {
@@ -108,8 +129,8 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error getting config: %w", err)
 	}
 
-	if v.GetString(keyPassphrase) != "" && !(cmd.Flag(keySigningKeyIndex).Changed || cmd.Flag(keyFingerprint).Changed) {
-		return fmt.Errorf("--passphrase only effective when PGP signing enabled")
+	if err := validateArgs(cmd, v); err != nil {
+		return err
 	}
 
 	signing := v.GetString(keyPassphrase) != "" ||
@@ -118,6 +139,7 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 		v.GetBool(keySign)
 
 	var signerOpts []integrity.SignerOpt
+
 	if signing {
 		fmt.Printf("Build artifacts will be automatically signed\n")
 
@@ -128,6 +150,7 @@ func executeBuildCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	var libraryRef string
+
 	if len(args) > 1 {
 		libraryRef = args[1]
 	} else {

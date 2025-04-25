@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -44,21 +44,21 @@ func newTestFEServer(t *testing.T) *httptest.Server {
 }
 
 func TestNew(t *testing.T) {
-	const dockerBuildSpec = "docker://alpine:3"
-	const localSIFFileName = "alpine_3.sif"
-	const defFile = "alpine.def"
+	const (
+		dockerBuildSpec  = "docker://alpine:3"
+		localSIFFileName = "alpine_3.sif"
+		defFile          = "alpine.def"
 
-	const libraryPath = "entity/collection/container"
-	const tag = "tag"
+		libraryPath = "entity/collection/container"
+		tag         = "tag"
+	)
 
 	testLibraryRef := fmt.Sprintf("library:///%v:%v", libraryPath, tag)
-	_ = testLibraryRef
 
 	testFeSrv := newTestFEServer(t)
 	defer testFeSrv.Close()
 
 	testLibraryRefWithHost := fmt.Sprintf("library://%v/%v:%v", defaultFEHost, libraryPath, tag)
-	_ = testLibraryRefWithHost
 
 	for _, tt := range []struct {
 		name        string
@@ -96,6 +96,7 @@ func TestNew(t *testing.T) {
 			if (err != nil) != tt.expectError {
 				t.Fatalf("Unexpected error: %v", err)
 			}
+
 			if err != nil {
 				// Received expected error.
 				return
@@ -104,6 +105,7 @@ func TestNew(t *testing.T) {
 			if tt.buildSpec == dockerBuildSpec {
 				assert.Equal(t, dockerBuildSpec, b.buildSpec)
 			}
+
 			if tt.libraryRef == localSIFFileName {
 				assert.Equal(t, localSIFFileName, b.dstFileName)
 				assert.Nil(t, b.libraryRef)
@@ -223,7 +225,7 @@ func Test_build(t *testing.T) {
 		defer c.Close()
 
 		// Write 10 lines of sample build output
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			if err := c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Sample remote build output: line #%d\n", i))); err != nil {
 				t.Fatalf("error writing to websocket: %v", err)
 			}
@@ -259,7 +261,6 @@ func Test_build(t *testing.T) {
 	if err != nil {
 		t.Fatalf("initialization error: %v", err)
 	}
-	_ = app
 
 	const buildDef = "bootstrap: docker\nfrom: alpine:3\n"
 

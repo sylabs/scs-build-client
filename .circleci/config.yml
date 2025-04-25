@@ -6,7 +6,7 @@ orbs:
 parameters:
   cosign-version:
     type: string
-    default: '2.4.2'
+    default: '2.5.0'
 
 executors:
   node:
@@ -14,7 +14,7 @@ executors:
       - image: node:22-slim
   golangci-lint:
     docker:
-      - image: golangci/golangci-lint:v1.63
+      - image: golangci/golangci-lint:v2.1
   golang-previous:
     docker:
       - image: golang:1.23

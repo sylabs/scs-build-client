@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -22,6 +22,7 @@ func splitLibraryRef(libraryRef string) (string, string) {
 	if len(comps) < 2 {
 		return comps[0], ""
 	}
+
 	return comps[0], comps[1]
 }
 

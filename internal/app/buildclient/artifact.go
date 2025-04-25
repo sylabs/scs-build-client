@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -32,9 +32,11 @@ func (app *App) buildArtifact(ctx context.Context, arch string, def []byte, buil
 	if err != nil {
 		return nil, fmt.Errorf("error submitting remote build: %w", err)
 	}
+
 	if err := app.buildClient.GetOutput(ctx, bi.ID(), os.Stdout); err != nil {
 		return nil, fmt.Errorf("error streaming remote build output: %w", err)
 	}
+
 	if bi, err = app.buildClient.GetStatus(ctx, bi.ID()); err != nil {
 		return nil, fmt.Errorf("error getting remote build status: %w", err)
 	}
@@ -53,6 +55,7 @@ func (app *App) retrieveArtifact(ctx context.Context, bi *build.BuildInfo, filen
 	if err != nil {
 		return fmt.Errorf("error opening file %s for writing: %w", filename, err)
 	}
+
 	defer func() {
 		_ = fp.Close()
 	}()
@@ -72,7 +75,8 @@ func (app *App) retrieveArtifact(ctx context.Context, bi *build.BuildInfo, filen
 		if strings.ToLower(values[0]) == "sha256" {
 			imageChecksum := hex.EncodeToString(h.Sum(nil))
 			if values[1] != imageChecksum {
-				fmt.Fprintf(os.Stderr, "Error: image checksum mismatch (expecting %v, got %v)\n", values[1], imageChecksum)
+				fmt.Fprintf(os.Stderr, "Error: image checksum mismatch (expecting %v, got %v)\n",
+					values[1], imageChecksum)
 			} else {
 				fmt.Fprintf(os.Stderr, "Image checksum verified successfully.\n")
 			}

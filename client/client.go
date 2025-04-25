@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2019-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the LICENSE.md file
 // distributed with the sources of this project regarding your rights to use or distribute this
 // software.
@@ -126,6 +126,7 @@ func NewClient(opts ...Option) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
+
 	c.baseURL = u
 
 	return &c, nil
@@ -153,6 +154,7 @@ func (c *Client) setRequestHeaders(h http.Header) {
 	if v := c.bearerToken; v != "" {
 		h.Set("Authorization", fmt.Sprintf("BEARER %s", v))
 	}
+
 	if v := c.userAgent; v != "" {
 		h.Set("User-Agent", v)
 	}

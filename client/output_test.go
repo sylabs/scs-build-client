@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2019-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -25,6 +25,7 @@ func (tor testOutputWriter) Write(p []byte) (int, error) {
 	if tor.fully {
 		return len(p), tor.err
 	}
+
 	return len(p) - 1, tor.err
 }
 
@@ -34,7 +35,6 @@ func TestOutput(t *testing.T) {
 	defer cancel()
 
 	// Table of tests to run
-	// nolint:maligned
 	tests := []struct {
 		description     string
 		expectSuccess   bool
@@ -54,12 +54,11 @@ func TestOutput(t *testing.T) {
 
 	// Loop over test cases
 	for _, useTLS := range []bool{true, false} {
-		useTLS := useTLS
-
 		name := func() string {
 			if useTLS {
 				return "WithTLS"
 			}
+
 			return "WithoutTLS"
 		}()
 
@@ -67,8 +66,6 @@ func TestOutput(t *testing.T) {
 			t.Parallel()
 
 			for _, tt := range tests {
-				tt := tt
-
 				t.Run(tt.description, func(t *testing.T) {
 					// Start a mock server
 					m := mockService{t: t}
@@ -78,6 +75,7 @@ func TestOutput(t *testing.T) {
 					clientOptions := []Option{}
 
 					var s *httptest.Server
+
 					if useTLS {
 						s = httptest.NewTLSServer(mux)
 
@@ -85,12 +83,14 @@ func TestOutput(t *testing.T) {
 						if !ok {
 							t.Fatal("Internal error- unable to typecast HTTP client transport")
 						}
+
 						tr = tr.Clone()
 
 						clientOptions = append(clientOptions, OptHTTPTransport(tr))
 					} else {
 						s = httptest.NewServer(mux)
 					}
+
 					defer s.Close()
 
 					// Mock server address is fixed for all tests
@@ -109,7 +109,9 @@ func TestOutput(t *testing.T) {
 						fully: tt.outputReadFully,
 						err:   tt.outputReadErr,
 					}
+
 					err = c.GetOutput(tt.ctx, "id", tor)
+
 					if tt.expectSuccess {
 						// Ensure the handler returned no error, and the response is as expected
 						if err != nil {

@@ -1,4 +1,4 @@
-// Copyright (c) 2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the LICENSE.md file
 // distributed with the sources of this project regarding your rights to use or distribute this
 // software.
@@ -41,9 +41,11 @@ func TestHTTPError(t *testing.T) {
 			if got, want := err.Code, tt.code; got != want {
 				t.Errorf("got code %v, want %v", got, want)
 			}
+
 			if got, want := err.Unwrap(), tt.err; got != want {
 				t.Errorf("got unwrapped error %v, want %v", got, want)
 			}
+
 			if got, want := err.Error(), tt.wantMessage; got != want {
 				t.Errorf("got message %v, want %v", got, want)
 			}

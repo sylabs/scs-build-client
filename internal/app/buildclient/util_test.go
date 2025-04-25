@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -98,6 +98,7 @@ func Test_getBuildDef(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var result string
+
 			if tt.useTempFile {
 				result = t.TempDir() + tt.fileName
 				if tt.fileName != "" {
@@ -105,10 +106,11 @@ func Test_getBuildDef(t *testing.T) {
 					if err != nil {
 						t.Fatalf("%v", err)
 					}
-					_, err = fp.Write([]byte(tt.want))
-					if err != nil {
+
+					if _, err := fp.Write([]byte(tt.want)); err != nil {
 						t.Fatalf("%v", err)
 					}
+
 					defer fp.Close()
 				}
 			} else {
