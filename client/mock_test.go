@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -52,6 +52,7 @@ func newResponse(m *mockService, id string, libraryRef string) rawBuildInfo {
 		Scheme: "http",
 		Host:   m.httpAddr,
 	}
+
 	if libraryRef == "" {
 		libraryRef = "library://user/collection/image"
 	}
@@ -72,9 +73,11 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var br struct {
 			LibraryRef string `json:"libraryRef"`
 		}
+
 		if err := json.NewDecoder(r.Body).Decode(&br); err != nil {
 			m.t.Fatalf("failed to parse request: %v", err)
 		}
+
 		if m.buildResponseCode == http.StatusCreated {
 			id := newObjectID()
 			if err := jsonresp.WriteResponse(w, newResponse(m, id, br.LibraryRef), m.buildResponseCode); err != nil {
@@ -91,6 +94,7 @@ func (m *mockService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if id == "" {
 			m.t.Fatalf("failed to parse ID '%v'", id)
 		}
+
 		if m.statusResponseCode == http.StatusOK {
 			if err := jsonresp.WriteResponse(w, newResponse(m, id, ""), m.statusResponseCode); err != nil {
 				m.t.Fatal(err)
@@ -139,6 +143,7 @@ func (m *mockService) ServeWebsocket(w http.ResponseWriter, r *http.Request) {
 		if err = ws.WriteMessage(websocket.TextMessage, []byte(stdoutContents)); err != nil {
 			m.t.Fatalf("error writing websocket message - %v", err)
 		}
+
 		if err = ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(m.wsCloseCode, "")); err != nil {
 			m.t.Fatalf("error writing websocket close message - %v", err)
 		}
@@ -155,14 +160,18 @@ func TestBuild(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
+
 	f.Close()
+
 	defer os.Remove(f.Name())
 
 	// Start a mock server
 	m := mockService{t: t}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", m.ServeHTTP)
 	mux.HandleFunc(wsPath, m.ServeWebsocket)
+
 	s := httptest.NewServer(mux)
 	defer s.Close()
 
@@ -170,7 +179,6 @@ func TestBuild(t *testing.T) {
 	m.httpAddr = s.Listener.Addr().String()
 
 	// Table of tests to run
-	// nolint:maligned
 	tests := []struct {
 		description         string
 		expectSubmitSuccess bool
@@ -222,6 +230,7 @@ func TestBuild(t *testing.T) {
 				if err == nil {
 					t.Fatalf("unexpected submit success")
 				}
+
 				return
 			}
 			// Ensure the handler returned no error, and the response is as expected
@@ -233,7 +242,9 @@ func TestBuild(t *testing.T) {
 				fully: true,
 				err:   nil,
 			}
+
 			err = c.GetOutput(tt.ctx, bd.ID(), tor)
+
 			if tt.expectStreamSuccess {
 				// Ensure the handler returned no error, and the response is as expected
 				if err != nil {

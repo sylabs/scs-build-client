@@ -1,4 +1,4 @@
-// Copyright (c) 2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -51,6 +51,7 @@ func (m *mockUploadBuildContext) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			Size   int64  `json:"size"`
 			Digest string `json:"digest"`
 		}
+
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			m.t.Fatalf("failed to decode request: %v", err)
 		}
@@ -218,6 +219,7 @@ func (m *mockDeleteBuildContext) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		if err := jsonresp.WriteError(w, "", m.code); err != nil {
 			m.t.Fatalf("failed to write error: %v", err)
 		}
+
 		return
 	}
 
@@ -253,8 +255,6 @@ func TestClient_DeleteBuildContext(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

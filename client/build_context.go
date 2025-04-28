@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -68,12 +68,14 @@ func (c *Client) getBuildContextUploadLocation(ctx context.Context, size int64, 
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := c.buildContextHTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
+
 	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 { // non-2xx status code
@@ -94,6 +96,7 @@ func (c *Client) putBuildContext(ctx context.Context, loc *url.URL, r io.Reader,
 	if err != nil {
 		return err
 	}
+
 	req.Header.Set("Content-Type", "application/octet-stream")
 	req.Header.Del("Authorization")
 
@@ -103,11 +106,13 @@ func (c *Client) putBuildContext(ctx context.Context, loc *url.URL, r io.Reader,
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
+
 	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 {
 		return fmt.Errorf("%w", errorFromResponse(res))
 	}
+
 	return nil
 }
 
@@ -139,6 +144,7 @@ func (c *Client) uploadBuildContext(ctx context.Context, rw io.ReadWriteSeeker, 
 		if errors.Is(err, errContextAlreadyPresent) {
 			return digest, nil
 		}
+
 		return "", fmt.Errorf("failed to get build context upload location: %w", err)
 	}
 

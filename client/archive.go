@@ -1,4 +1,4 @@
-// Copyright (c) 2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2022-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -39,6 +39,7 @@ func (ar *archiver) writeEntry(name string) (err error) {
 	if _, ok := ar.archived[name]; ok {
 		return nil
 	}
+
 	defer func() {
 		if err == nil {
 			ar.archived[name] = struct{}{}
@@ -56,6 +57,7 @@ func (ar *archiver) writeEntry(name string) (err error) {
 	if err != nil {
 		return err
 	}
+
 	h.Name = filepath.ToSlash(name)
 
 	// Check that we're writing a supported type, and make any necessary adjustments.

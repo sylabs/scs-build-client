@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -31,8 +31,6 @@ func Test_Stage(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			f := files{Args: tt.args}
 
@@ -53,14 +51,14 @@ func Test_SourcePath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			ft := FileTransport{Src: tt.source}
+
 			got, err := ft.SourcePath()
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
+
 			log.Println(got)
 
 			if tt.source == "/" && got != "." {
@@ -73,20 +71,24 @@ func Test_SourcePath(t *testing.T) {
 func TestExtractFiles(t *testing.T) {
 	// Create test build server
 	r := http.NewServeMux()
+
 	r.HandleFunc("/v1/convert-def-file", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
+
 		if _, err := w.Write(defFileData); err != nil {
 			t.Fatalf("HTTP write error: %v", err)
 		}
 	})
+
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
 	// Create test frontend server
 	feRouter := http.NewServeMux()
+
 	feRouter.HandleFunc("/assets/config/config.prod.json", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -96,6 +98,7 @@ func TestExtractFiles(t *testing.T) {
 			t.Fatalf("error writing HTTP response: %v", err)
 		}
 	})
+
 	tsFE := httptest.NewServer(feRouter)
 	defer tsFE.Close()
 

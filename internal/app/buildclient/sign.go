@@ -1,4 +1,4 @@
-// Copyright (c) 2023, Sylabs Inc. All rights reserved.
+// Copyright (c) 2023-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -15,9 +15,9 @@ func sign(fileName string, opts ...integrity.SignerOpt) error {
 	if err != nil {
 		return err
 	}
+
 	defer func() {
-		err := f.UnloadContainer()
-		if err != nil {
+		if err := f.UnloadContainer(); err != nil {
 			return
 		}
 	}()
@@ -26,5 +26,6 @@ func sign(fileName string, opts ...integrity.SignerOpt) error {
 	if err != nil {
 		return err
 	}
+
 	return is.Sign()
 }

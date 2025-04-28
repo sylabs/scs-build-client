@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -74,6 +74,7 @@ func (d definition) SourceFiles() (result []string) {
 			result = append(result, f.Src)
 		}
 	}
+
 	return
 }
 
@@ -104,20 +105,23 @@ func (app *App) parseDefinition(ctx context.Context, r io.Reader) (definition, e
 	}
 
 	var d definition
+
 	if err := jsonresp.ReadResponse(res.Body, &d); err != nil {
 		return definition{}, err
 	}
+
 	return d, err
 }
 
 // ExtractFiles makes request to remote build server to parse specified def file and returns
 // files referenced in '%files' section(s)
-func (app *App) getFiles(ctx context.Context, r io.Reader) (files []string, err error) {
+func (app *App) getFiles(ctx context.Context, r io.Reader) ([]string, error) {
 	d, err := app.parseDefinition(ctx, r)
 	if err != nil {
-		err = fmt.Errorf("def file parse error: %w", err)
-		return
+		return nil, fmt.Errorf("def file parse error: %w", err)
 	}
+
+	files := []string{}
 
 	for _, f := range d.BuildData.Files {
 		if f.Stage() != "" {
@@ -129,11 +133,12 @@ func (app *App) getFiles(ctx context.Context, r io.Reader) (files []string, err 
 			updFileName, err := ft.SourcePath()
 			if err != nil {
 				err = fmt.Errorf("error parsing def file: %w", err)
-				return []string{}, err
+				return nil, err
 			}
 
 			files = append(files, updFileName)
 		}
 	}
-	return
+
+	return files, nil
 }

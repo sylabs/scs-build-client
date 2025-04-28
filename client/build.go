@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022, Sylabs Inc. All rights reserved.
+// Copyright (c) 2018-2025, Sylabs Inc. All rights reserved.
 // This software is licensed under a 3-clause BSD license. Please consult the
 // LICENSE.md file distributed with the sources of this project regarding your
 // rights to use or distribute this software.
@@ -95,6 +95,7 @@ func OptBuildWorkingDirectory(dir string) BuildOption {
 		}
 
 		bo.workingDir = dir
+
 		return nil
 	}
 }
@@ -174,12 +175,14 @@ func (c *Client) Submit(ctx context.Context, definition io.Reader, opts ...Build
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
+
 	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 { // non-2xx status code
