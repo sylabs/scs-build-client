@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  codecov: codecov/codecov@3
+  codecov: codecov/codecov@5
 
 parameters:
   cosign-version:
@@ -75,7 +75,7 @@ jobs:
           name: Run Unit Tests
           command: go test -coverprofile cover.out -race ./...
       - codecov/upload:
-          file: cover.out
+          files: cover.out
 
   release-test:
     executor: golang-latest
