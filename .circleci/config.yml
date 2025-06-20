@@ -6,7 +6,7 @@ orbs:
 parameters:
   cosign-version:
     type: string
-    default: '2.5.2'
+    default: "2.5.2"
 
 commands:
   install-docker:
@@ -87,6 +87,16 @@ jobs:
     executor: << parameters.e >>
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Download Go modules
+          command: go mod download
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - /go/pkg/mod
       - run:
           name: Build Source
           command: go build ./...
