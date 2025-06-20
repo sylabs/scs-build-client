@@ -123,6 +123,16 @@ jobs:
       - install-binfmt
       - install-syft
       - install-cosign
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Download Go modules
+          command: go mod download
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - /go/pkg/mod
       - run:
           name: Test Release
           command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release --snapshot --skip publish
@@ -143,6 +153,16 @@ jobs:
           name: Authenticate with DockerHub
           command: echo "${DOCKER_PASSWORD}" | docker login docker.io -u "${DOCKER_USERNAME}" --password-stdin
       - install-syft
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Download Go modules
+          command: go mod download
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - /go/pkg/mod
       - run:
           name: Publish Release
           command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release
