@@ -6,9 +6,6 @@ release:
 changelog:
   use: github-native
 
-env:
-  - DOCKER_CLI_EXPERIMENTAL=enabled
-
 gomod:
   proxy: true
   env:
@@ -63,16 +60,16 @@ builds:
 
 archives:
   - id: darwin-archives
-    builds:
+    ids:
       - darwin-builds
 
   - id: linux-archives
-    builds:
+    ids:
       - linux-builds
 
   - id: windows-archives
-    format: zip
-    builds:
+    formats: ['zip']
+    ids:
       - windows-builds
 
 dockers:
