@@ -54,7 +54,6 @@ func TestSubmit(t *testing.T) {
 			bi, err := c.Submit(tt.ctx, strings.NewReader(""),
 				OptBuildLibraryRef(tt.libraryRef),
 			)
-
 			if got, want := err, tt.wantErr; !errors.Is(got, want) {
 				t.Fatalf("got error %v, want %v", got, want)
 			}

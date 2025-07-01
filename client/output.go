@@ -61,6 +61,7 @@ func (c *Client) GetOutput(ctx context.Context, buildID string, w io.Writer) err
 
 	go func() {
 		defer close(errChan)
+
 		errChan <- func() error {
 			for {
 				// Read from websocket

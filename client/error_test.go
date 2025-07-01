@@ -37,7 +37,6 @@ func TestHTTPError(t *testing.T) {
 				Code: tt.code,
 				err:  tt.err,
 			}
-
 			if got, want := err.Code, tt.code; got != want {
 				t.Errorf("got code %v, want %v", got, want)
 			}

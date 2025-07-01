@@ -114,7 +114,6 @@ func TestClient_GetVersion(t *testing.T) {
 			}
 
 			v, err := c.GetVersion(tt.ctx)
-
 			if got, want := err, tt.wantErr; !errors.Is(got, want) {
 				t.Fatalf("got error %v, want %v", got, want)
 			}
