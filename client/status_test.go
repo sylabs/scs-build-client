@@ -52,7 +52,6 @@ func TestStatus(t *testing.T) {
 
 			// Call the handler
 			bi, err := c.GetStatus(tt.ctx, id)
-
 			if got, want := err, tt.wantErr; !errors.Is(got, want) {
 				t.Fatalf("got error %v, want %v", got, want)
 			}

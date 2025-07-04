@@ -196,7 +196,6 @@ func TestClient_UploadBuildContext(t *testing.T) {
 			}
 
 			digest, err := c.UploadBuildContext(context.Background(), tt.paths, optUploadBuildContextFS(fsys))
-
 			if got, want := err, tt.wantErr; !errors.Is(got, want) {
 				t.Errorf("got error %v, want %v", got, want)
 			}
@@ -271,7 +270,6 @@ func TestClient_DeleteBuildContext(t *testing.T) {
 			}
 
 			err = c.DeleteBuildContext(context.Background(), tt.digest)
-
 			if got, want := err, tt.wantErr; !errors.Is(got, want) {
 				t.Errorf("got error %v, want %v", got, want)
 			}

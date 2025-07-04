@@ -1,12 +1,39 @@
 version: 2.1
 
 orbs:
-  codecov: codecov/codecov@3
+  codecov: codecov/codecov@5
 
 parameters:
   cosign-version:
     type: string
-    default: '2.5.0'
+    default: "2.5.2"
+
+commands:
+  install-docker:
+    steps:
+      - run:
+          name: Install Docker
+          command: curl -sL https://get.docker.com | bash
+  install-binfmt:
+    steps:
+      - run:
+          name: Install Cross-Platform Emulators
+          command: docker run --privileged --rm tonistiigi/binfmt --install all
+  install-syft:
+    steps:
+      - run:
+          name: Install syft
+          command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+  install-cosign:
+    steps:
+      - run:
+          name: Install cosign
+          command: |
+            COSIGN_VERSION="v<< pipeline.parameters.cosign-version >>"
+            wget -q "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+            wget -q -O - "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign_checksums.txt" | grep -w cosign-linux-amd64 | sha256sum -c
+            install cosign-linux-amd64 /usr/local/bin/cosign
+            rm cosign-linux-amd64
 
 executors:
   node:
@@ -14,7 +41,7 @@ executors:
       - image: node:22-slim
   golangci-lint:
     docker:
-      - image: golangci/golangci-lint:v2.1
+      - image: golangci/golangci-lint:v2.2
   golang-previous:
     docker:
       - image: golang:1.23
@@ -60,6 +87,16 @@ jobs:
     executor: << parameters.e >>
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Download Go modules
+          command: go mod download
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - /go/pkg/mod
       - run:
           name: Build Source
           command: go build ./...
@@ -75,28 +112,27 @@ jobs:
           name: Run Unit Tests
           command: go test -coverprofile cover.out -race ./...
       - codecov/upload:
-          file: cover.out
+          files: cover.out
 
   release-test:
     executor: golang-latest
     steps:
       - checkout
       - setup_remote_docker
+      - install-docker
+      - install-binfmt
+      - install-syft
+      - install-cosign
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
       - run:
-          name: Install Docker
-          command: curl -sL https://get.docker.com | bash
-      - run:
-          name: Install Cross-Platform Emulators
-          command: docker run --privileged --rm tonistiigi/binfmt --install all
-      - run:
-          name: Install syft
-          command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-      - run:
-          name: Install cosign
-          command: |
-            COSIGN_VERSION="v<< pipeline.parameters.cosign-version >>"
-            wget -q "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
-            wget -q -O - "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign_checksums.txt" | grep -w cosign-linux-amd64 | sha256sum -c
+          name: Download Go modules
+          command: go mod download
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - /go/pkg/mod
       - run:
           name: Test Release
           command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release --snapshot --skip publish
@@ -111,29 +147,26 @@ jobs:
           command: |
             apt-get update
             apt-get install -y awscli
-      - run:
-          name: Install Docker
-          command: curl -sL https://get.docker.com | bash
-      - run:
-          name: Install Cross-Platform Emulators
-          command: docker run --privileged --rm tonistiigi/binfmt --install all
+      - install-docker
+      - install-binfmt
       - run:
           name: Authenticate with DockerHub
           command: echo "${DOCKER_PASSWORD}" | docker login docker.io -u "${DOCKER_USERNAME}" --password-stdin
+      - install-syft
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
       - run:
-          name: Install syft
-          command: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          name: Download Go modules
+          command: go mod download
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - /go/pkg/mod
       - run:
           name: Publish Release
           command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release
-      - run:
-          name: Install cosign
-          command: |
-            COSIGN_VERSION="v<< pipeline.parameters.cosign-version >>"
-            wget -q "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
-            wget -q -O - "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign_checksums.txt" | grep -w cosign-linux-amd64 | sha256sum -c
-            install cosign-linux-amd64 /usr/local/bin/cosign
-            rm cosign-linux-amd64
+      - install-cosign
       - run:
           name: Attach attestations to image
           command: |
@@ -147,8 +180,6 @@ jobs:
             done
 
 workflows:
-  version: 2
-
   build-and-test:
     jobs:
       - lint-markdown
