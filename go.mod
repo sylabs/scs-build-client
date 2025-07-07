@@ -10,7 +10,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
-	github.com/sylabs/json-resp v0.9.4
+	github.com/sylabs/json-resp v0.9.5
 	github.com/sylabs/scs-library-client v1.4.12
 	github.com/sylabs/sif/v2 v2.21.1
 	golang.org/x/term v0.32.0
