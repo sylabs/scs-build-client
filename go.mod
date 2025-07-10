@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/ProtonMail/go-crypto v1.3.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/sebdah/goldie/v2 v2.7.0
+	github.com/sebdah/goldie/v2 v2.7.1
 	github.com/sigstore/sigstore v1.9.5
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
