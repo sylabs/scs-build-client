@@ -6,7 +6,7 @@ orbs:
 parameters:
   cosign-version:
     type: string
-    default: "2.5.2"
+    default: "3.0.2"
 
 commands:
   install-docker:
