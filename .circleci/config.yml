@@ -6,7 +6,7 @@ orbs:
 parameters:
   cosign-version:
     type: string
-    default: "2.5.2"
+    default: "3.0.2"
 
 commands:
   install-docker:
@@ -41,11 +41,8 @@ executors:
       - image: node:22-slim
   golangci-lint:
     docker:
-      - image: golangci/golangci-lint:v2.2
-  golang-previous:
-    docker:
-      - image: golang:1.23
-  golang-latest:
+      - image: golangci/golangci-lint:v2.5
+  golang:
     docker:
       - image: golang:1.24
 
@@ -70,7 +67,7 @@ jobs:
           command: golangci-lint run
 
   check-go-mod:
-    executor: golang-latest
+    executor: golang
     steps:
       - checkout
       - run:
@@ -81,10 +78,7 @@ jobs:
           command: git diff --exit-code -- go.mod go.sum
 
   build-source:
-    parameters:
-      e:
-        type: executor
-    executor: << parameters.e >>
+    executor: golang
     steps:
       - checkout
       - restore_cache:
@@ -102,10 +96,7 @@ jobs:
           command: go build ./...
 
   unit-test:
-    parameters:
-      e:
-        type: executor
-    executor: << parameters.e >>
+    executor: golang
     steps:
       - checkout
       - run:
@@ -115,7 +106,7 @@ jobs:
           files: cover.out
 
   release-test:
-    executor: golang-latest
+    executor: golang
     steps:
       - checkout
       - setup_remote_docker
@@ -138,7 +129,7 @@ jobs:
           command: curl -sfL https://goreleaser.com/static/run | DISTRIBUTION=oss bash -s -- release --snapshot --skip publish
 
   publish-release:
-    executor: golang-latest
+    executor: golang
     steps:
       - checkout
       - setup_remote_docker
@@ -185,14 +176,8 @@ workflows:
       - lint-markdown
       - lint-source
       - check-go-mod
-      - build-source:
-          matrix:
-            parameters:
-              e: ["golang-previous", "golang-latest"]
-      - unit-test:
-          matrix:
-            parameters:
-              e: ["golang-previous", "golang-latest"]
+      - build-source
+      - unit-test
       - release-test
 
   tagged-release:

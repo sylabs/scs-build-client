@@ -68,14 +68,16 @@ func (ft FileTransport) SourcePath() (string, error) {
 }
 
 // SourceFiles extracts source file names for parsed def file
-func (d definition) SourceFiles() (result []string) {
+func (d definition) SourceFiles() []string {
+	result := []string{}
+
 	for _, e := range d.BuildData.Files {
 		for _, f := range e.Files {
 			result = append(result, f.Src)
 		}
 	}
 
-	return
+	return result
 }
 
 // parseDefinition calls /v1/convert-def-file API to parse definition file (read from 'r'),
