@@ -88,6 +88,11 @@ func Test_archiver_WriteFiles(t *testing.T) {
 					Mode:    0o755 | fs.ModeSymlink,
 					ModTime: testTime,
 				},
+				"a/hello": &fstest.MapFile{
+					Data:    []byte("hello"),
+					Mode:    0o755,
+					ModTime: testTime,
+				},
 			},
 			paths: []string{"a/b"},
 		},

@@ -120,6 +120,10 @@ func TestClient_UploadBuildContext(t *testing.T) {
 			Mode:    0o755 | fs.ModeDir,
 			ModTime: testTime,
 		},
+		"c/b": &fstest.MapFile{
+			Mode:    0o755,
+			ModTime: testTime,
+		},
 		"c/d": &fstest.MapFile{
 			Data:    []byte("b"),
 			Mode:    0o755 | fs.ModeSymlink,
@@ -156,14 +160,14 @@ func TestClient_UploadBuildContext(t *testing.T) {
 			paths: []string{
 				".",
 			},
-			wantDigest: "sha256.b59c5b1086aac46b5ca3c83e3b9cb1966b30f8681c77da044a6b81d6823ec893",
+			wantDigest: "sha256.6480ea1af9ef7d8b6ba29bad647c702a02a507478edbf893a8f1dd5c6dd3068f",
 		},
 		{
 			name: "Glob",
 			paths: []string{
 				"*",
 			},
-			wantDigest: "sha256.b59c5b1086aac46b5ca3c83e3b9cb1966b30f8681c77da044a6b81d6823ec893",
+			wantDigest: "sha256.6480ea1af9ef7d8b6ba29bad647c702a02a507478edbf893a8f1dd5c6dd3068f",
 		},
 		{
 			name: "OneFile",
@@ -178,7 +182,7 @@ func TestClient_UploadBuildContext(t *testing.T) {
 				"a/b",
 				"c/d",
 			},
-			wantDigest: "sha256.b59c5b1086aac46b5ca3c83e3b9cb1966b30f8681c77da044a6b81d6823ec893",
+			wantDigest: "sha256.a44bff035adf351aa9f8efc93d547a31f9f170c0b50e536f431742d4425bd327",
 		},
 	}
 	for _, tt := range tests {
