@@ -44,7 +44,7 @@ executors:
       - image: golangci/golangci-lint:v2.5
   golang:
     docker:
-      - image: golang:1.24
+      - image: golang:1.25
 
 jobs:
   lint-markdown:
