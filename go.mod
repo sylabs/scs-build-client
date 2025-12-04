@@ -7,7 +7,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/sebdah/goldie/v2 v2.8.0
 	github.com/sigstore/sigstore v1.10.0
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/sylabs/json-resp v0.9.5
