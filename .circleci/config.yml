@@ -38,7 +38,7 @@ commands:
 executors:
   node:
     docker:
-      - image: node:22-slim
+      - image: node:24-slim
   golangci-lint:
     docker:
       - image: golangci/golangci-lint:v2.6
