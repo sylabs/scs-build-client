@@ -6,7 +6,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.3.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/sebdah/goldie/v2 v2.8.0
-	github.com/sigstore/sigstore v1.10.2
+	github.com/sigstore/sigstore v1.10.3
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
@@ -23,7 +23,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-log/log v0.2.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
-	github.com/google/go-containerregistry v0.20.6 // indirect
+	github.com/google/go-containerregistry v0.20.7 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
