@@ -69,7 +69,7 @@ func (ft FileTransport) SourcePath() (string, error) {
 
 // SourceFiles extracts source file names for parsed def file
 func (d definition) SourceFiles() []string {
-	result := []string{}
+	result := make([]string, 0, len(d.BuildData.Files))
 
 	for _, e := range d.BuildData.Files {
 		for _, f := range e.Files {
