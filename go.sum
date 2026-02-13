@@ -86,8 +86,8 @@ github.com/sylabs/json-resp v0.9.5 h1:mSMWgfolaCOeWB/+IpedxlZ+MRYh4PcCLMgay5b/Xy
 github.com/sylabs/json-resp v0.9.5/go.mod h1:Q9X4wRlZNPv3x76KaL8vTCBO4aC/DP2gh13xdtEqd1g=
 github.com/sylabs/scs-library-client v1.4.14 h1:T2ANR5fWm6sGfsSgx1bsFc4zsu1VB3TI4XCmzSwATkE=
 github.com/sylabs/scs-library-client v1.4.14/go.mod h1:rylcxfSvj4o3fNlmC6qQmHdALxypL7lmAKuNWxUnAFg=
-github.com/sylabs/sif/v2 v2.22.0 h1:Y+xXufp4RdgZe02SR3nWEg7S6q4tPWN237WHYzkDSKA=
-github.com/sylabs/sif/v2 v2.22.0/go.mod h1:W1XhWTmG1KcG7j5a3KSYdMcUIFvbs240w/MMVW627hs=
+github.com/sylabs/sif/v2 v2.23.0 h1:VWJC7iryINdIgyIK8EdxMCJkx8EDPVlvFaskgY+ruFk=
+github.com/sylabs/sif/v2 v2.23.0/go.mod h1:0UJk7MMSQS2n/95yYd+CvAfK7K2mE0aWHRYYybd+ouw=
 go.yaml.in/yaml/v3 v3.0.4 h1:tfq32ie2Jv2UxXFdLJdh3jXuOzWiL1fo0bu/FbuKpbc=
 go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
 golang.org/x/crypto v0.45.0 h1:jMBrvKuj23MTlT0bQEOBcAE0mjg8mK9RXFhRH6nyF3Q=
