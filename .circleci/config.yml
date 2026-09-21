@@ -41,10 +41,10 @@ executors:
       - image: node:24-slim
   golangci-lint:
     docker:
-      - image: golangci/golangci-lint:v2.8
+      - image: golangci/golangci-lint:v2.13
   golang:
     docker:
-      - image: golang:1.25
+      - image: golang:1.27
 
 jobs:
   lint-markdown:
