@@ -13,7 +13,7 @@ linters:
     - errcheck
     - errchkjson
     - gochecknoinits
-    - goconst
+#    - goconst  // too aggressive w.r.t test cases
     - gocyclo
     - godox
     - goprintffuncname
