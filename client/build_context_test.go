@@ -160,21 +160,21 @@ func TestClient_UploadBuildContext(t *testing.T) {
 			paths: []string{
 				".",
 			},
-			wantDigest: "sha256.6480ea1af9ef7d8b6ba29bad647c702a02a507478edbf893a8f1dd5c6dd3068f",
+			wantDigest: "sha256.95d6d4caa7170326e330d03ccc594267ad10699edcf58c3ad3a63adc3f33385d",
 		},
 		{
 			name: "Glob",
 			paths: []string{
 				"*",
 			},
-			wantDigest: "sha256.6480ea1af9ef7d8b6ba29bad647c702a02a507478edbf893a8f1dd5c6dd3068f",
+			wantDigest: "sha256.95d6d4caa7170326e330d03ccc594267ad10699edcf58c3ad3a63adc3f33385d",
 		},
 		{
 			name: "OneFile",
 			paths: []string{
 				"a/b",
 			},
-			wantDigest: "sha256.260f31076fb13f26070866751c27e4528c0e49d0690a1c9468148915e177baaf",
+			wantDigest: "sha256.a0c268a05463959f838526d171fb2692aefd5f5db2be60083287a85e33d247b7",
 		},
 		{
 			name: "TwoFiles",
@@ -182,7 +182,7 @@ func TestClient_UploadBuildContext(t *testing.T) {
 				"a/b",
 				"c/d",
 			},
-			wantDigest: "sha256.a44bff035adf351aa9f8efc93d547a31f9f170c0b50e536f431742d4425bd327",
+			wantDigest: "sha256.17ba2a6c53d0c850829b3cfbb5d69d1f07f0407ce6fa45f9103a521c6d510aee",
 		},
 	}
 	for _, tt := range tests {
