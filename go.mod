@@ -1,12 +1,12 @@
 module github.com/sylabs/scs-build-client
 
-go 1.26.0
+go 1.27
 
 require (
 	github.com/ProtonMail/go-crypto v1.5.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/sebdah/goldie/v2 v2.8.0
-	github.com/sigstore/sigstore v1.10.11
+	github.com/sigstore/sigstore v1.11.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
